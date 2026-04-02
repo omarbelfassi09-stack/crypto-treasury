@@ -1013,5 +1013,172 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
         except Exception as e:
             st.error(f"Erreur chargement historique : {str(e)}")
 
+# ── SECTION 15 : ABONNEMENT & PAIEMENT ──
+    st.subheader("15. Passer au plan superieur")
+
+    if plan == "starter":
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
+             padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1.5rem; text-align: center;">
+            <h3 style="color: white; margin-bottom: 0.5rem;">Debloquez toutes les fonctionnalites</h3>
+            <p style="opacity: 0.85;">Acces complet au dashboard avance, Monte Carlo, alertes, analyse IA et plus.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+            <div style="background: white; border: 2px solid #3b82f6; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                <div style="font-size: 0.8rem; font-weight: 600; color: #3b82f6; margin-bottom: 0.5rem;">PROFESSIONAL</div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: #1e1e3c;">99 EUR<span style="font-size: 0.9rem; font-weight: 400; color: #888;">/mois</span></div>
+                <div style="font-size: 0.85rem; color: #22c55e; margin: 0.3rem 0;">ou 990 EUR/an — 2 mois offerts</div>
+                <hr style="margin: 1rem 0; border-color: #eee;">
+                <p style="font-size: 0.85rem; color: #555; text-align: left;">
+                ✓ Dashboard avance complet<br>
+                ✓ Monte Carlo + stress tests MiCA<br>
+                ✓ Analyse IA illimitee<br>
+                ✓ Alertes personnalisees<br>
+                ✓ Rapport PDF board-ready<br>
+                ✓ Backtesting historique
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("Mensuel — 99 EUR", use_container_width=True, key="pro_monthly"):
+                    try:
+                        import stripe
+                        stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
+                        session = stripe.checkout.Session.create(
+                            payment_method_types=["card", "paypal"],
+                            line_items=[{"price": st.secrets["STRIPE_PRICE_PRO_MONTHLY"], "quantity": 1}],
+                            mode="subscription",
+                            success_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=success&plan=professional",
+                            cancel_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=cancel",
+                            customer_email=st.session_state.user.email,
+                            metadata={"user_id": st.session_state.user.id, "plan": "professional"}
+                        )
+                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
+                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                    except Exception as e:
+                        st.error(f"Erreur : {str(e)}")
+
+            with col_b:
+                if st.button("Annuel — 990 EUR", use_container_width=True, key="pro_annual"):
+                    try:
+                        import stripe
+                        stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
+                        session = stripe.checkout.Session.create(
+                            payment_method_types=["card", "paypal"],
+                            line_items=[{"price": st.secrets["STRIPE_PRICE_PRO_ANNUAL"], "quantity": 1}],
+                            mode="subscription",
+                            success_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=success&plan=professional",
+                            cancel_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=cancel",
+                            customer_email=st.session_state.user.email,
+                            metadata={"user_id": st.session_state.user.id, "plan": "professional"}
+                        )
+                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
+                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                    except Exception as e:
+                        st.error(f"Erreur : {str(e)}")
+
+        with col2:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); border-radius: 12px; padding: 1.5rem; text-align: center; color: white;">
+                <div style="font-size: 0.8rem; font-weight: 600; color: #f7931a; margin-bottom: 0.5rem;">CORPORATE</div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: white;">500 EUR<span style="font-size: 0.9rem; font-weight: 400; opacity: 0.7;">/mois</span></div>
+                <div style="font-size: 0.85rem; color: #22c55e; margin: 0.3rem 0;">ou 4 800 EUR/an — 2 mois offerts</div>
+                <hr style="margin: 1rem 0; border-color: rgba(255,255,255,0.2);">
+                <p style="font-size: 0.85rem; opacity: 0.85; text-align: left;">
+                ✓ Tout le plan Professional<br>
+                ✓ Module FX multi-devises<br>
+                ✓ Reporting MiCA / IFRS complet<br>
+                ✓ Multi-actifs avances<br>
+                ✓ Support prioritaire<br>
+                ✓ API access
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("Mensuel — 500 EUR", use_container_width=True, key="corp_monthly"):
+                    try:
+                        import stripe
+                        stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
+                        session = stripe.checkout.Session.create(
+                            payment_method_types=["card", "paypal"],
+                            line_items=[{"price": st.secrets["STRIPE_PRICE_CORP_MONTHLY"], "quantity": 1}],
+                            mode="subscription",
+                            success_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=success&plan=corporate",
+                            cancel_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=cancel",
+                            customer_email=st.session_state.user.email,
+                            metadata={"user_id": st.session_state.user.id, "plan": "corporate"}
+                        )
+                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
+                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                    except Exception as e:
+                        st.error(f"Erreur : {str(e)}")
+
+            with col_b:
+                if st.button("Annuel — 4 800 EUR", use_container_width=True, key="corp_annual"):
+                    try:
+                        import stripe
+                        stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
+                        session = stripe.checkout.Session.create(
+                            payment_method_types=["card", "paypal"],
+                            line_items=[{"price": st.secrets["STRIPE_PRICE_CORP_ANNUAL"], "quantity": 1}],
+                            mode="subscription",
+                            success_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=success&plan=corporate",
+                            cancel_url="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/?payment=cancel",
+                            customer_email=st.session_state.user.email,
+                            metadata={"user_id": st.session_state.user.id, "plan": "corporate"}
+                        )
+                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
+                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                    except Exception as e:
+                        st.error(f"Erreur : {str(e)}")
+
+        st.divider()
+        st.markdown("""
+        <div style="text-align: center;">
+            <p style="color: #888; font-size: 0.85rem;">
+            Paiement securise par Stripe — CB, PayPal acceptes<br>
+            Resiliation possible a tout moment
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("#### Payer en Bitcoin")
+        st.markdown("""
+        <div style="background: #f8f9ff; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem;">
+            <p style="color: #1e1e3c; font-weight: 600; margin-bottom: 0.5rem;">Adresse Bitcoin pour paiement manuel</p>
+            <p style="font-family: monospace; background: white; padding: 0.8rem; border-radius: 6px;
+               border: 1px solid #eee; font-size: 0.9rem; word-break: break-all; color: #444;">
+               bc1q3ygqnqsxm8eqeztpjtqwdr98r498gz27fwqtp3
+            </p>
+            <p style="color: #666; font-size: 0.85rem; margin-top: 0.8rem;">
+            Envoyez l'equivalent en BTC et contactez-nous a <strong>contact@cryptotreasury.com</strong>
+            avec votre recu de transaction. Votre plan sera active manuellement sous 24h.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif plan in ["professional", "corporate"]:
+        st.success(f"Vous etes sur le plan {plan.capitalize()} — toutes les fonctionnalites sont actives.")
+        st.markdown("""
+        <div style="background: #f8f9ff; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem; margin-top: 1rem;">
+            <p style="color: #666; font-size: 0.9rem;">
+            Pour modifier ou resilier votre abonnement, contactez-nous a 
+            <strong>contact@cryptotreasury.com</strong>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    
     st.divider()
     st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
