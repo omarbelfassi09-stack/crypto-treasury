@@ -405,5 +405,174 @@ if st.button("Generer le rapport PDF"):
     )
     st.success("Rapport board-ready genere avec succes !")
 
+# ── SECTION 9 : ALERTES PERSONNALISEES ──
+st.subheader("9. Alertes et seuils personnalises")
+
+col1, col2 = st.columns(2)
+with col1:
+    seuil_perte = st.number_input("Perte maximale acceptable (EUR)", min_value=0, value=20000, step=1000)
+    seuil_poids = st.slider("Poids crypto maximum acceptable (%)", 1, 30, 10)
+with col2:
+    seuil_var = st.number_input("VaR journaliere maximale acceptable (EUR)", min_value=0, value=10000, step=500)
+    seuil_crash = st.slider("Seuil d'alerte crash (%)", 10, 60, 30)
+
+st.markdown("##### Etat de vos alertes")
+
+alerte1 = var_99 > seuil_var
+alerte2 = poids_crypto > seuil_poids
+alerte3 = (valeur_totale_crypto * (seuil_crash/100)) > seuil_perte
+alerte4 = cash_apres_crash < cash_buffer
+
+col1, col2 = st.columns(2)
+with col1:
+    if alerte1:
+        st.error(f"VaR journaliere ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
+    else:
+        st.success(f"VaR journaliere ({var_99:,.0f} EUR) dans les limites acceptables")
+
+    if alerte2:
+        st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
+    else:
+        st.success(f"Poids crypto ({poids_crypto:.1f}%) dans les limites acceptables")
+
+with col2:
+    if alerte3:
+        st.error(f"En cas de crash -{seuil_crash}%, perte ({valeur_totale_crypto*(seuil_crash/100):,.0f} EUR) depasse votre tolerance ({seuil_perte:,.0f} EUR)")
+    else:
+        st.success(f"Perte en cas de crash -{seuil_crash}% dans votre tolerance")
+
+    if alerte4:
+        st.error(f"Cash buffer insuffisant apres crash -50%")
+    else:
+        st.success(f"Cash buffer securise apres crash -50%")
+
+nb_alertes = sum([alerte1, alerte2, alerte3, alerte4])
+if nb_alertes == 0:
+    st.info("Aucune alerte active — votre portefeuille respecte tous vos seuils.")
+elif nb_alertes <= 2:
+    st.warning(f"{nb_alertes} alerte(s) active(s) — revoyez votre exposition.")
+else:
+    st.error(f"{nb_alertes} alertes actives — action immediate recommandee.")
+
+st.divider()
+
+# ── SECTION 10 : HEDGING ──
+st.subheader("10. Module hedging et couverture")
+
+st.markdown("Simulez l'impact d'une couverture partielle via futures sur votre risque.")
+
+col1, col2 = st.columns(2)
+with col1:
+    pct_hedge = st.slider("Pourcentage de couverture (%)", 0, 100, 50)
+    cout_hedge_annuel = st.slider("Cout annuel de la couverture (%)", 1, 10, 3)
+with col2:
+    st.markdown("##### Impact de la couverture")
+    
+    valeur_couverte = valeur_totale_crypto * (pct_hedge / 100)
+    valeur_non_couverte = valeur_totale_crypto * (1 - pct_hedge / 100)
+    
+    var_95_hedge = valeur_non_couverte * vol_journaliere * 1.645
+    var_99_hedge = valeur_non_couverte * vol_journaliere * 2.326
+    
+    reduction_var = ((var_99 - var_99_hedge) / var_99) * 100
+    cout_annuel_eur = valeur_couverte * (cout_hedge_annuel / 100)
+    
+    st.metric("VaR 99% apres couverture", f"-{var_99_hedge:,.0f} EUR", f"{-reduction_var:.0f}% vs sans couverture")
+    st.metric("Cout annuel de la couverture", f"{cout_annuel_eur:,.0f} EUR")
+    st.metric("Valeur couverte", f"{valeur_couverte:,.0f} EUR")
+
+fig_hedge = go.Figure()
+fig_hedge.add_trace(go.Bar(
+    name="Sans couverture",
+    x=["VaR 95%", "VaR 99%"],
+    y=[var_95, var_99],
+    marker_color="#ef4444"
+))
+fig_hedge.add_trace(go.Bar(
+    name=f"Avec couverture {pct_hedge}%",
+    x=["VaR 95%", "VaR 99%"],
+    y=[var_95_hedge, var_99_hedge],
+    marker_color="#22c55e"
+))
+fig_hedge.update_layout(
+    title="Impact de la couverture sur le risque (EUR)",
+    barmode="group",
+    height=320,
+    yaxis_title="Perte potentielle (EUR)"
+)
+st.plotly_chart(fig_hedge, use_container_width=True)
+
+if reduction_var > 0:
+    st.info(f"Une couverture a {pct_hedge}% reduit votre VaR de {reduction_var:.0f}% pour un cout de {cout_annuel_eur:,.0f} EUR/an.")
+
+st.divider()
+
+# ── SECTION 11 : RECOMMANDATION IA ──
+st.subheader("11. Recommandation strategique IA")
+
+tresorerie_investissable = tresorerie_totale - cash_buffer
+
+if tolerance == "Faible":
+    alloc_min, alloc_max = 1, 3
+elif tolerance == "Moderee":
+    alloc_min, alloc_max = 3, 7
+else:
+    alloc_min, alloc_max = 7, 15
+
+if horizon == "3 mois":
+    alloc_max = min(alloc_max, 3)
+elif horizon == "6 mois":
+    alloc_max = min(alloc_max, 5)
+
+if revenus_usd > 50:
+    alloc_min += 1
+    alloc_max += 2
+
+alloc_recommandee = (alloc_min + alloc_max) / 2
+montant_recommande = tresorerie_investissable * (alloc_recommandee / 100)
+btc_recommande = montant_recommande / prix_btc
+ecart_actuel = montant_recommande - valeur_totale_crypto
+
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); 
+     padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
+    <h3 style="color: white; margin-bottom: 1rem;">Recommandation personnalisee</h3>
+    <p style="font-size: 1.1rem;">
+        Pour un profil <strong>{tolerance}</strong> avec un horizon <strong>{horizon}</strong>, 
+        une allocation de <strong>{alloc_min}-{alloc_max}% en BTC</strong> est recommandee.
+    </p>
+    <p style="font-size: 1rem; opacity: 0.85;">
+        Montant optimal : <strong>{montant_recommande:,.0f} EUR</strong> 
+        ({btc_recommande:.3f} BTC au prix actuel)
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Allocation recommandee", f"{alloc_recommandee:.1f}%")
+col2.metric("Montant optimal en BTC", f"{montant_recommande:,.0f} EUR")
+
+if ecart_actuel > 0:
+    col3.metric("Action recommandee", f"Acheter {ecart_actuel:,.0f} EUR de BTC", f"+{(ecart_actuel/prix_btc):.4f} BTC")
+    st.warning(f"Votre exposition actuelle ({valeur_totale_crypto:,.0f} EUR) est inferieure a l'optimal. Vous pourriez ajouter {ecart_actuel:,.0f} EUR de BTC.")
+elif ecart_actuel < 0:
+    col3.metric("Action recommandee", f"Reduire de {abs(ecart_actuel):,.0f} EUR", f"-{(abs(ecart_actuel)/prix_btc):.4f} BTC")
+    st.warning(f"Votre exposition actuelle ({valeur_totale_crypto:,.0f} EUR) depasse l'optimal. Envisagez de reduire de {abs(ecart_actuel):,.0f} EUR.")
+else:
+    col3.metric("Action recommandee", "Position optimale")
+    st.success("Votre allocation est parfaitement alignee avec votre profil de risque.")
+
+st.markdown("""
+<div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; 
+     border-left: 4px solid #0ea5e9; margin-top: 1rem;">
+    <small style="color: #0369a1;">
+    <strong>Avertissement :</strong> Ces recommandations sont generees automatiquement 
+    sur la base de votre profil de risque et des donnees de marche. 
+    Elles ne constituent pas un conseil en investissement au sens reglementaire. 
+    Consultez un conseiller financier avant toute decision.
+    </small>
+</div>
+""", unsafe_allow_html=True)
+
 st.divider()
 st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
