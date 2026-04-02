@@ -645,11 +645,6 @@ Sois précis, professionnel, et parle comme un CFO s'adresserait à son conseil 
             
         except Exception as e:
             st.error(f"Erreur API : {str(e)}")
-```
-
-Ensuite ajoutez `anthropic` dans votre fichier `requirements.txt` sur GitHub — ouvrez le fichier, cliquez sur le crayon, et ajoutez une ligne :
-```
-anthropic
 
 st.divider()
 st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
