@@ -39,7 +39,7 @@ def register(email, password, entreprise):
                 "id": res.user.id,
                 "email": email,
                 "entreprise": entreprise,
-                "plan": "free"
+                "plan": "starter"
             }).execute()
             st.session_state.user = res.user
             st.session_state.page = "app"
@@ -126,7 +126,7 @@ if st.session_state.user is None:
         st.markdown("""
         <div style="text-align:center;">
             <p style="color:#888; font-size:0.85rem;">
-            Freemium gratuit — Plan Pro a 299 EUR/mois<br>
+            Starter gratuit — Plan Professional a partir de 99 EUR/mois<br>
             Conforme IFRS 9 et MiCA
             </p>
         </div>
@@ -168,7 +168,7 @@ else:
                 <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
                     Passez au plan superieur pour acceder a {nom_fonctionnalite}.
                 </p>
-                <a href="mailto:contact@cryptotreasury.com" 
+                <a href="mailto:contact@cryptotreasury.com"
                    style="background: #1e1e3c; color: white; padding: 0.6rem 1.5rem;
                    border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
                    Passer au plan {plan_requis.capitalize()}
@@ -177,9 +177,9 @@ else:
             """, unsafe_allow_html=True)
             return False
         return True
-        
-    # Bouton deconnexion discret en haut a droite
-   col1, col2 = st.columns([5, 1])
+
+    # ── NAVBAR ──
+    col1, col2 = st.columns([5, 1])
     with col1:
         plan_couleurs = {
             "starter": "#22c55e",
@@ -200,9 +200,6 @@ else:
         st.markdown(f"<small style='color:#888'>{st.session_state.user.email}</small>", unsafe_allow_html=True)
         if st.button("Deconnexion"):
             logout()
-            
-
-    # ── VOTRE CODE ORIGINAL INTACT ──
 
     st.markdown("""
     <style>
@@ -257,7 +254,6 @@ else:
 
     # ── SECTION 1 : INPUTS TRESORERIE CFO ──
     st.subheader("1. Profil de tresorerie de votre entreprise")
-
     col1, col2 = st.columns(2)
     with col1:
         nom_entreprise = st.text_input("Nom de l'entreprise", "Mon Entreprise SAS")
@@ -272,7 +268,6 @@ else:
 
     # ── SECTION 2 : EXPOSITION CRYPTO ──
     st.subheader("2. Exposition crypto actuelle")
-
     col1, col2 = st.columns(2)
     with col1:
         montant_btc = st.number_input("Quantite BTC", min_value=0.0, value=2.0, step=0.1)
@@ -295,7 +290,6 @@ else:
 
     # ── SECTION 3 : TABLEAU DE BORD CFO ──
     st.subheader("3. Tableau de bord tresorerie")
-
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Valeur crypto totale", f"{valeur_totale_crypto:,.0f} EUR")
     col2.metric("Poids / tresorerie", f"{poids_crypto:.1f}%")
@@ -311,7 +305,6 @@ else:
 
     # ── SECTION 4 : SCORE DE RISQUE ──
     st.subheader("4. Score de risque global")
-
     score = 50
     if tolerance == "Faible":
         score -= 20
@@ -362,7 +355,6 @@ else:
 
     # ── SECTION 5 : BENCHMARK ──
     st.subheader("5. Benchmark — Impact BTC sur votre tresorerie")
-
     allocations = [0, 1, 2, 3, 5, 7, 10]
     rendements_annuels_btc = 0.60
     rendement_cash = 0.03
@@ -405,7 +397,7 @@ else:
 
     st.divider()
 
-   # ── SECTION 6 : BACKTESTING ──
+    # ── SECTION 6 : BACKTESTING ──
     st.subheader("6. Backtesting — Et si vous aviez investi ?")
     if bloc_pro("le backtesting historique", "professional"):
         col1, col2 = st.columns(2)
@@ -464,7 +456,6 @@ else:
 
     # ── SECTION 7 : MONTE CARLO ──
     st.subheader("7. Simulation Monte Carlo — 30 jours")
-
     if st.button("Lancer la simulation Monte Carlo"):
         with st.spinner("Simulation de 1000 scenarios..."):
             resultats = []
@@ -497,7 +488,6 @@ else:
 
     # ── SECTION 8 : RAPPORT PDF ──
     st.subheader("8. Rapport PDF board-ready")
-
     if st.button("Generer le rapport PDF"):
         pdf = FPDF()
         pdf.add_page()
@@ -544,9 +534,12 @@ else:
         ligne("Cash buffer apres crash -50% :", f"{cash_apres_crash:,.0f} EUR")
         pdf.ln(4)
         section("2. Allocation recommandee")
-        if score < 30: reco = "1-3% de la tresorerie en BTC (profil conservateur)"
-        elif score < 70: reco = "3-7% de la tresorerie en BTC (profil equilibre)"
-        else: reco = "Reduire l'exposition - envisager une couverture partielle"
+        if score < 30:
+            reco = "1-3% de la tresorerie en BTC (profil conservateur)"
+        elif score < 70:
+            reco = "3-7% de la tresorerie en BTC (profil equilibre)"
+        else:
+            reco = "Reduire l'exposition - envisager une couverture partielle"
         ligne("Recommandation :", reco)
         ligne("Horizon conseille :", horizon)
         ligne("Tolerance au risque :", tolerance)
@@ -578,8 +571,6 @@ else:
             mime="application/pdf"
         )
         st.success("Rapport board-ready genere avec succes !")
-
-    # Sauvegarde dans Supabase
         try:
             supabase.table("rapports").insert({
                 "user_id": st.session_state.user.id,
@@ -594,7 +585,9 @@ else:
         except Exception as e:
             pass
 
-   # ── SECTION 9 : ALERTES PERSONNALISEES ──
+    st.divider()
+
+    # ── SECTION 9 : ALERTES PERSONNALISEES ──
     st.subheader("9. Alertes et seuils personnalises")
     if bloc_pro("les alertes personnalisees", "professional"):
         col1, col2 = st.columns(2)
@@ -710,9 +703,7 @@ else:
 
     # ── SECTION 10 : HEDGING ──
     st.subheader("10. Module hedging et couverture")
-
     st.markdown("Simulez l'impact d'une couverture partielle via futures sur votre risque.")
-
     col1, col2 = st.columns(2)
     with col1:
         pct_hedge = st.slider("Pourcentage de couverture (%)", 0, 100, 50)
@@ -740,9 +731,8 @@ else:
 
     st.divider()
 
-    # ── SECTION 11 : RECOMMANDATION IA ──
+    # ── SECTION 11 : RECOMMANDATION STRATEGIQUE ──
     st.subheader("11. Recommandation strategique IA")
-
     tresorerie_investissable = tresorerie_totale - cash_buffer
 
     if tolerance == "Faible":
@@ -807,6 +797,8 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
+    st.divider()
+
     # ── SECTION 12 : ANALYSE IA CLAUDE ──
     st.subheader("12. Analyse IA — Powered by Claude")
     if bloc_pro("l'analyse IA", "professional"):
@@ -870,7 +862,7 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                     st.error(f"Erreur API : {str(e)}")
     st.divider()
 
-# ── SECTION 13 : MODULE FX ──
+    # ── SECTION 13 : MODULE FX ──
     st.subheader("13. Module FX — Gestion du risque de change")
     if bloc_pro("le module FX multi-devises", "corporate"):
         @st.cache_data(ttl=3600)
@@ -993,9 +985,8 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
         """, unsafe_allow_html=True)
     st.divider()
 
-# ── SECTION 14 : HISTORIQUE DES RAPPORTS ──
+    # ── SECTION 14 : HISTORIQUE DES RAPPORTS ──
     st.subheader("14. Historique des rapports")
-
     if st.button("Charger mon historique"):
         try:
             historique = supabase.table("rapports")\
@@ -1021,6 +1012,6 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                         st.caption(f"Profil : {rapport['profil']} — VaR 99% : -{rapport['var_99']:,.0f} EUR")
         except Exception as e:
             st.error(f"Erreur chargement historique : {str(e)}")
-            
+
     st.divider()
     st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
