@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoTreasury — Gestion des risques crypto pour entreprises</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a2e; }
+
+nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.2rem 4rem; background: white;
+  border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100;
+}
+.logo { font-size: 1.4rem; font-weight: 700; color: #1e1e3c; }
+.logo span { color: #f7931a; }
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a { text-decoration: none; color: #555; font-size: 0.95rem; }
+.btn-nav {
+  background: #1e1e3c; color: white !important;
+  padding: 0.5rem 1.2rem; border-radius: 6px; font-size: 0.9rem;
+}
+
+.hero {
+  background: linear-gradient(135deg, #1e1e3c 0%, #2d2d6b 60%, #1a1a4e 100%);
+  color: white; padding: 6rem 4rem; text-align: center;
+}
+.hero-badge {
+  display: inline-block; background: rgba(247,147,26,0.2);
+  color: #f7931a; padding: 0.4rem 1rem; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 500; margin-bottom: 1.5rem;
+  border: 1px solid rgba(247,147,26,0.3);
+}
+.hero h1 { font-size: 3.2rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.2; }
+.hero h1 span { color: #f7931a; }
+.hero p { font-size: 1.2rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.7; }
+.hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  background: #f7931a; color: white; padding: 0.9rem 2rem;
+  border-radius: 8px; text-decoration: none; font-weight: 600;
+  font-size: 1rem; transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary {
+  background: rgba(255,255,255,0.1); color: white;
+  padding: 0.9rem 2rem; border-radius: 8px; text-decoration: none;
+  font-weight: 500; border: 1px solid rgba(255,255,255,0.3);
+  transition: background 0.2s;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+.stats {
+  display: flex; justify-content: center; gap: 4rem;
+  padding: 3rem 4rem; background: #f8f9ff;
+  border-bottom: 1px solid #eee; flex-wrap: wrap;
+}
+.stat { text-align: center; }
+.stat-number { font-size: 2rem; font-weight: 700; color: #1e1e3c; }
+.stat-label { font-size: 0.9rem; color: #777; margin-top: 0.3rem; }
+
+.section { padding: 5rem 4rem; max-width: 1100px; margin: 0 auto; }
+.section-title { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 0.8rem; }
+.section-sub { text-align: center; color: #666; font-size: 1.05rem; margin-bottom: 3rem; }
+
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+.feature-card {
+  background: white; border: 1px solid #eee; border-radius: 12px;
+  padding: 1.8rem; transition: box-shadow 0.2s;
+}
+.feature-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.feature-icon {
+  width: 48px; height: 48px; border-radius: 10px;
+  background: #f0f0ff; display: flex; align-items: center;
+  justify-content: center; font-size: 1.4rem; margin-bottom: 1rem;
+}
+.feature-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+.feature-card p { color: #666; font-size: 0.9rem; line-height: 1.6; }
+
+.compliance {
+  background: #f8f9ff; padding: 4rem;
+  border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+}
+.compliance-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+.compliance-badges { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 2rem; }
+.badge {
+  background: white; border: 1px solid #ddd; border-radius: 8px;
+  padding: 0.8rem 1.5rem; font-weight: 600; font-size: 0.95rem; color: #1e1e3c;
+}
+
+.pricing { padding: 5rem 4rem; max-width: 900px; margin: 0 auto; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+.pricing-card {
+  background: white; border: 1px solid #eee; border-radius: 12px;
+  padding: 2rem; text-align: center;
+}
+.pricing-card.featured {
+  border: 2px solid #1e1e3c; position: relative;
+}
+.featured-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: #1e1e3c; color: white; padding: 0.2rem 1rem;
+  border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+}
+.pricing-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+.pricing-price { font-size: 2.5rem; font-weight: 700; color: #1e1e3c; margin: 1rem 0; }
+.pricing-price span { font-size: 1rem; font-weight: 400; color: #888; }
+.pricing-features { list-style: none; text-align: left; margin: 1.5rem 0; }
+.pricing-features li { padding: 0.4rem 0; font-size: 0.9rem; color: #555; }
+.pricing-features li::before { content: "✓ "; color: #22c55e; font-weight: 700; }
+.btn-plan {
+  display: block; padding: 0.8rem; border-radius: 8px;
+  text-decoration: none; font-weight: 600; font-size: 0.95rem;
+  transition: opacity 0.2s;
+}
+.btn-plan-free { background: #f4f4f4; color: #1e1e3c; }
+.btn-plan-pro { background: #1e1e3c; color: white; }
+.btn-plan:hover { opacity: 0.85; }
+
+.cta {
+  background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
+  color: white; text-align: center; padding: 5rem 4rem;
+}
+.cta h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 1rem; }
+.cta p { opacity: 0.85; font-size: 1.1rem; margin-bottom: 2rem; }
+
+footer {
+  background: #1a1a2e; color: #aaa;
+  text-align: center; padding: 2rem; font-size: 0.85rem;
+}
+footer a { color: #aaa; text-decoration: none; margin: 0 1rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Crypto<span>Treasury</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Fonctionnalites</a></li>
+    <li><a href="#compliance">Conformite</a></li>
+    <li><a href="#pricing">Tarifs</a></li>
+    <li><a href="VOTRE_URL_STREAMLIT" class="btn-nav">Essai gratuit</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">Conforme MiCA et IFRS 9</div>
+  <h1>Gerez vos risques <span>crypto</span><br>comme un professionnel</h1>
+  <p>La premiere plateforme SaaS de gestion des risques crypto pour les entreprises et institutions financieres europeennes.</p>
+  <div class="hero-buttons">
+    <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" class="btn-primary">Essayer gratuitement</a>
+    <a href="mailto:contact@cryptotreasury.com" class="btn-secondary">Demander une demo</a>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-number">1 000+</div>
+    <div class="stat-label">Scenarios simules par analyse</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">Temps reel</div>
+    <div class="stat-label">Prix BTC et ETH en direct</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">IFRS 9</div>
+    <div class="stat-label">Rapports conformes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">MiCA</div>
+    <div class="stat-label">Stress tests conformes</div>
+  </div>
+</div>
+
+<div class="section" id="features">
+  <h2 class="section-title">Tout ce dont votre CFO a besoin</h2>
+  <p class="section-sub">Une plateforme complete pour integrer le Bitcoin dans votre strategie de tresorerie.</p>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">₿</div>
+      <h3>Prix en temps reel</h3>
+      <p>Bitcoin et Ethereum en EUR et USD, mis a jour automatiquement toutes les minutes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>VaR et risque IFRS 9</h3>
+      <p>Calcul automatique de la Value at Risk a 95% et 99%, conforme aux normes comptables europeennes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Score de risque global</h3>
+      <p>Un score 0-100 personnalise selon votre tresorerie, votre tolerance au risque et votre horizon.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔮</div>
+      <h3>Simulation Monte Carlo</h3>
+      <p>1000 scenarios de marche simules pour visualiser la distribution des risques sur 30 jours.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <h3>Backtesting 3 ans</h3>
+      <p>Simulez l'impact historique d'une allocation BTC sur votre tresorerie sur les 3 dernieres annees.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>Analyse IA</h3>
+      <p>Une analyse strategique personnalisee generee par intelligence artificielle pour votre conseil d'administration.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <h3>Module hedging</h3>
+      <p>Simulez l'impact d'une couverture partielle via futures sur votre VaR et votre cout de portage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📄</div>
+      <h3>Rapport PDF board-ready</h3>
+      <p>Generez en un clic un rapport professionnel pret pour votre conseil d'administration.</p>
+    </div>
+  </div>
+</div>
+
+<div class="compliance" id="compliance">
+  <div class="compliance-inner">
+    <h2 class="section-title">Concu pour la conformite europeenne</h2>
+    <p class="section-sub">CryptoTreasury integre nativement les normes reglementaires qui s'appliquent a vos crypto-actifs.</p>
+    <div class="compliance-badges">
+      <div class="badge">IFRS 9 — Juste valeur</div>
+      <div class="badge">MiCA Art. 76 — Stress tests</div>
+      <div class="badge">IAS 32 — Instruments financiers</div>
+      <div class="badge">Audit trail automatique</div>
+    </div>
+  </div>
+</div>
+
+<div class="pricing" id="pricing">
+  <h2 class="section-title">Tarifs simples et transparents</h2>
+  <p class="section-sub">Commencez gratuitement, passez au Pro quand vous etes pret.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="pricing-name">Freemium</div>
+      <div class="pricing-price">0 <span>EUR / mois</span></div>
+      <ul class="pricing-features">
+        <li>Prix BTC et ETH en temps reel</li>
+        <li>VaR et score de risque</li>
+        <li>Simulation Monte Carlo</li>
+        <li>Rapport PDF basique</li>
+        <li>1 portefeuille</li>
+      </ul>
+      <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" class="btn-plan btn-plan-free">Commencer gratuitement</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="featured-badge">Recommande</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-price">299 <span>EUR / mois</span></div>
+      <ul class="pricing-features">
+        <li>Tout le plan Freemium</li>
+        <li>Analyse IA illimitee</li>
+        <li>Backtesting historique</li>
+        <li>Module hedging</li>
+        <li>Rapport board-ready</li>
+        <li>Alertes personnalisees</li>
+        <li>Support prioritaire</li>
+        <li>Multi-portefeuilles</li>
+      </ul>
+      <a href="mailto:contact@cryptotreasury.com" class="btn-plan btn-plan-pro">Demander une demo</a>
+    </div>
+  </div>
+</div>
+
+<div class="cta">
+  <h2>Pret a securiser votre tresorerie crypto ?</h2>
+  <p>Rejoignez les entreprises qui gerent leurs risques crypto avec CryptoTreasury.</p>
+  <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" class="btn-primary">Essayer gratuitement</a>
+</div>
+
+<footer>
+  <p>
+    <a href="#">Mentions legales</a>
+    <a href="#">Confidentialite</a>
+    <a href="mailto:contact@cryptotreasury.com">Contact</a>
+  </p>
+  <p style="margin-top: 1rem;">CryptoTreasury — 2026 — Tous droits reserves</p>
+  <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.6;">
+    Ce service ne constitue pas un conseil en investissement. Usage professionnel uniquement.
+  </p>
+</footer>
+
+</body>
+</html>
