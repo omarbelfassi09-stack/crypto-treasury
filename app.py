@@ -739,5 +739,145 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
             except Exception as e:
                 st.error(f"Erreur API : {str(e)}")
 
+# ── SECTION 13 : MODULE FX ──
+    st.subheader("13. Module FX — Gestion du risque de change")
+
+    @st.cache_data(ttl=3600)
+    def get_fx_rates():
+        try:
+            url = "https://api.exchangerate-api.com/v4/latest/USD"
+            r = requests.get(url, timeout=10)
+            data = r.json()
+            return data["rates"]
+        except:
+            return {"EUR": 0.92, "GBP": 0.79, "JPY": 149.5, "CHF": 0.89, "CAD": 1.36, "AUD": 1.53}
+
+    fx_rates = get_fx_rates()
+    eur_usd = 1 / fx_rates.get("EUR", 0.92)
+
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
+         padding: 1.5rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
+        <h4 style="color:white; margin-bottom:0.5rem;">Taux de change en temps reel</h4>
+        <p style="opacity:0.85;">EUR/USD : <strong>{eur_usd:.4f}</strong> —
+        GBP/USD : <strong>{1/fx_rates.get('GBP', 0.79):.4f}</strong> —
+        USD/JPY : <strong>{fx_rates.get('JPY', 149.5):.2f}</strong> —
+        USD/CHF : <strong>{fx_rates.get('CHF', 0.89):.4f}</strong>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### Profil de revenus en devises etrangeres")
+    col1, col2 = st.columns(2)
+    with col1:
+        revenus_annuels_usd = st.number_input("Revenus annuels en USD", min_value=0, value=500000, step=10000)
+        revenus_annuels_gbp = st.number_input("Revenus annuels en GBP", min_value=0, value=0, step=10000)
+        revenus_annuels_jpy = st.number_input("Revenus annuels en JPY", min_value=0, value=0, step=1000000)
+    with col2:
+        revenus_annuels_chf = st.number_input("Revenus annuels en CHF", min_value=0, value=0, step=10000)
+        revenus_annuels_cad = st.number_input("Revenus annuels en CAD", min_value=0, value=0, step=10000)
+        revenus_annuels_aud = st.number_input("Revenus annuels en AUD", min_value=0, value=0, step=10000)
+
+    total_revenus_eur = (
+        revenus_annuels_usd * fx_rates.get("EUR", 0.92) / 1 +
+        revenus_annuels_gbp / fx_rates.get("GBP", 0.79) * fx_rates.get("EUR", 0.92) +
+        revenus_annuels_jpy / fx_rates.get("JPY", 149.5) * fx_rates.get("EUR", 0.92) +
+        revenus_annuels_chf / fx_rates.get("CHF", 0.89) * fx_rates.get("EUR", 0.92) +
+        revenus_annuels_cad / fx_rates.get("CAD", 1.36) * fx_rates.get("EUR", 0.92) +
+        revenus_annuels_aud / fx_rates.get("AUD", 1.53) * fx_rates.get("EUR", 0.92)
+    )
+
+    st.divider()
+    st.markdown("#### Risque de change sur vos revenus")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total revenus en EUR", f"{total_revenus_eur:,.0f} EUR")
+    col2.metric("Impact depreciation USD -10%", f"-{total_revenus_eur * 0.10:,.0f} EUR")
+    col3.metric("Impact depreciation USD -20%", f"-{total_revenus_eur * 0.20:,.0f} EUR")
+
+    vol_fx = 0.08
+    var_fx_95 = total_revenus_eur * vol_fx * 1.645
+    var_fx_99 = total_revenus_eur * vol_fx * 2.326
+
+    col1, col2 = st.columns(2)
+    col1.metric("VaR FX 95% (annuelle)", f"-{var_fx_95:,.0f} EUR")
+    col2.metric("VaR FX 99% (annuelle)", f"-{var_fx_99:,.0f} EUR")
+
+    if revenus_annuels_usd > 0:
+        scenarios_fx = {
+            "USD -20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.80),
+            "USD -10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.90),
+            "Actuel": revenus_annuels_usd * fx_rates.get("EUR", 0.92),
+            "USD +10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.10),
+            "USD +20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.20),
+        }
+        fig_fx = go.Figure()
+        fig_fx.add_trace(go.Bar(
+            x=list(scenarios_fx.keys()),
+            y=list(scenarios_fx.values()),
+            marker_color=["#ef4444", "#f59e0b", "#6366f1", "#22c55e", "#15803d"]
+        ))
+        fig_fx.update_layout(
+            title="Impact des variations EUR/USD sur vos revenus USD (EUR)",
+            yaxis_title="Revenus en EUR",
+            height=350
+        )
+        st.plotly_chart(fig_fx, use_container_width=True)
+
+    st.divider()
+    st.markdown("#### Simulation de couverture FX")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        type_couverture = st.selectbox("Type de couverture", ["Forward (vente a terme)", "Options de change", "Couverture naturelle"])
+        pct_couverture_fx = st.slider("Pourcentage a couvrir (%)", 0, 100, 50)
+        duree_couverture = st.selectbox("Duree de la couverture", ["3 mois", "6 mois", "1 an"])
+    with col2:
+        cout_couverture_map = {"Forward (vente a terme)": 0.5, "Options de change": 1.5, "Couverture naturelle": 0.2}
+        cout_pct = cout_couverture_map[type_couverture]
+        montant_couvert = total_revenus_eur * (pct_couverture_fx / 100)
+        montant_non_couvert = total_revenus_eur * (1 - pct_couverture_fx / 100)
+        cout_couverture_eur = montant_couvert * (cout_pct / 100)
+        var_residuelle = montant_non_couvert * vol_fx * 2.326
+
+        st.metric("Montant couvert", f"{montant_couvert:,.0f} EUR")
+        st.metric("Cout de la couverture", f"{cout_couverture_eur:,.0f} EUR/an")
+        st.metric("VaR residuelle 99%", f"-{var_residuelle:,.0f} EUR")
+
+    reduction_var_fx = ((var_fx_99 - var_residuelle) / var_fx_99 * 100) if var_fx_99 > 0 else 0
+
+    fig_fx2 = go.Figure()
+    fig_fx2.add_trace(go.Bar(
+        name="Sans couverture",
+        x=["VaR FX 95%", "VaR FX 99%"],
+        y=[var_fx_95, var_fx_99],
+        marker_color="#ef4444"
+    ))
+    fig_fx2.add_trace(go.Bar(
+        name=f"Avec couverture {pct_couverture_fx}%",
+        x=["VaR FX 95%", "VaR FX 99%"],
+        y=[montant_non_couvert * vol_fx * 1.645, var_residuelle],
+        marker_color="#22c55e"
+    ))
+    fig_fx2.update_layout(
+        title="Impact de la couverture sur le risque FX",
+        barmode="group",
+        height=320
+    )
+    st.plotly_chart(fig_fx2, use_container_width=True)
+
+    if reduction_var_fx > 0:
+        st.info(f"Une couverture {type_couverture} a {pct_couverture_fx}% reduit votre risque FX de {reduction_var_fx:.0f}% pour un cout de {cout_couverture_eur:,.0f} EUR/an.")
+
+    st.markdown("""
+    <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px;
+         border-left: 4px solid #0ea5e9; margin-top: 1rem;">
+        <small style="color: #0369a1;">
+        <strong>Note :</strong> Les taux de change sont fournis par ExchangeRate-API.
+        Les couts de couverture sont indicatifs. Consultez votre banque ou un courtier
+        specialise pour des cotations precises.
+        </small>
+    </div>
+    """, unsafe_allow_html=True)
     st.divider()
     st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
