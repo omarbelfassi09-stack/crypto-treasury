@@ -530,45 +530,44 @@ else:
         )
         st.success("Rapport board-ready genere avec succes !")
 
-    # ── SECTION 9 : ALERTES PERSONNALISEES ──
+   # ── SECTION 9 : ALERTES PERSONNALISEES ──
     st.subheader("9. Alertes et seuils personnalises")
 
     col1, col2 = st.columns(2)
     with col1:
         seuil_perte = st.number_input("Perte maximale acceptable (EUR)", min_value=0, value=20000, step=1000)
         seuil_poids = st.slider("Poids crypto maximum acceptable (%)", 1, 30, 10)
+        email_alertes = st.text_input("Email pour recevoir les alertes", value=st.session_state.user.email)
     with col2:
         seuil_var = st.number_input("VaR journaliere maximale acceptable (EUR)", min_value=0, value=10000, step=500)
         seuil_crash = st.slider("Seuil d'alerte crash (%)", 10, 60, 30)
-
-    st.markdown("##### Etat de vos alertes")
+        seuil_variation_btc = st.slider("Alerte variation BTC 24h (%)", 5, 30, 10)
 
     alerte1 = var_99 > seuil_var
     alerte2 = poids_crypto > seuil_poids
     alerte3 = (valeur_totale_crypto * (seuil_crash/100)) > seuil_perte
     alerte4 = cash_apres_crash < cash_buffer
+    alerte5 = abs(var_btc_24h) > seuil_variation_btc
+    alerte6 = var_btc_24h < -20
 
+    st.markdown("##### Etat de vos alertes")
     col1, col2 = st.columns(2)
     with col1:
-        if alerte1:
-            st.error(f"VaR journaliere ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
-        else:
-            st.success(f"VaR journaliere ({var_99:,.0f} EUR) dans les limites acceptables")
-        if alerte2:
-            st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
-        else:
-            st.success(f"Poids crypto ({poids_crypto:.1f}%) dans les limites acceptables")
+        if alerte1: st.error(f"VaR ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
+        else: st.success("VaR dans les limites acceptables")
+        if alerte2: st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
+        else: st.success("Poids crypto dans les limites")
+        if alerte5: st.warning(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil : {seuil_variation_btc}%")
+        else: st.success(f"Variation BTC 24h normale : {var_btc_24h:+.2f}%")
     with col2:
-        if alerte3:
-            st.error(f"En cas de crash -{seuil_crash}%, perte ({valeur_totale_crypto*(seuil_crash/100):,.0f} EUR) depasse votre tolerance ({seuil_perte:,.0f} EUR)")
-        else:
-            st.success(f"Perte en cas de crash -{seuil_crash}% dans votre tolerance")
-        if alerte4:
-            st.error("Cash buffer insuffisant apres crash -50%")
-        else:
-            st.success("Cash buffer securise apres crash -50%")
+        if alerte3: st.error(f"Perte crash -{seuil_crash}% depasse votre tolerance")
+        else: st.success("Perte crash dans votre tolerance")
+        if alerte4: st.error("Cash buffer insuffisant apres crash -50%")
+        else: st.success("Cash buffer securise")
+        if alerte6: st.error(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
+        else: st.success("Pas de crash detecte")
 
-    nb_alertes = sum([alerte1, alerte2, alerte3, alerte4])
+    nb_alertes = sum([alerte1, alerte2, alerte3, alerte4, alerte5, alerte6])
     if nb_alertes == 0:
         st.info("Aucune alerte active — votre portefeuille respecte tous vos seuils.")
     elif nb_alertes <= 2:
@@ -576,7 +575,77 @@ else:
     else:
         st.error(f"{nb_alertes} alertes actives — action immediate recommandee.")
 
-    st.divider()
+    def envoyer_alertes_email(email, alertes_actives):
+        try:
+            import resend
+            resend.api_key = st.secrets["RESEND_API_KEY"]
+
+            contenu_alertes = ""
+            for alerte in alertes_actives:
+                contenu_alertes += f"<li style='margin-bottom:8px;'>{alerte}</li>"
+
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); padding: 2rem; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 1.5rem;">₿ CryptoTreasury</h1>
+                    <p style="color: rgba(255,255,255,0.8); margin: 0.5rem 0 0;">Alerte de risque detectee</p>
+                </div>
+                <div style="background: white; padding: 2rem; border: 1px solid #eee;">
+                    <h2 style="color: #1e1e3c; font-size: 1.1rem;">Bonjour,</h2>
+                    <p style="color: #444;">Les alertes suivantes ont ete detectees sur votre portefeuille crypto :</p>
+                    <ul style="color: #444; background: #fff8f8; border-left: 4px solid #ef4444; padding: 1rem 1rem 1rem 2rem; border-radius: 4px;">
+                        {contenu_alertes}
+                    </ul>
+                    <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                        <p style="color: #444; margin: 0; font-size: 0.9rem;"><strong>Portefeuille actuel :</strong></p>
+                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">BTC : {montant_btc} ({valeur_btc:,.0f} EUR)</p>
+                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">ETH : {montant_eth} ({valeur_eth:,.0f} EUR)</p>
+                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">Valeur totale : {valeur_totale_crypto:,.0f} EUR</p>
+                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">VaR 99% : -{var_99:,.0f} EUR</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" 
+                           style="background: #1e1e3c; color: white; padding: 0.8rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            Voir mon tableau de bord
+                        </a>
+                    </div>
+                </div>
+                <div style="background: #f8f9ff; padding: 1rem; border-radius: 0 0 10px 10px; text-align: center;">
+                    <p style="color: #888; font-size: 0.8rem; margin: 0;">
+                        CryptoTreasury — Conforme IFRS 9 et MiCA<br>
+                        Ce message est genere automatiquement — ne pas repondre
+                    </p>
+                </div>
+            </div>
+            """
+
+            resend.Emails.send({
+                "from": "CryptoTreasury <alertes@cryptotreasury.com>",
+                "to": email,
+                "subject": f"[CryptoTreasury] {len(alertes_actives)} alerte(s) detectee(s) sur votre portefeuille",
+                "html": html
+            })
+            return True
+        except Exception as e:
+            st.error(f"Erreur envoi email : {str(e)}")
+            return False
+
+    if nb_alertes > 0:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.warning(f"{nb_alertes} alerte(s) active(s) — voulez-vous recevoir un email ?")
+        with col2:
+            if st.button("Envoyer l'alerte par email"):
+                alertes_actives = []
+                if alerte1: alertes_actives.append(f"VaR journaliere ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
+                if alerte2: alertes_actives.append(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil maximum ({seuil_poids}%)")
+                if alerte3: alertes_actives.append(f"Perte en cas de crash -{seuil_crash}% depasse votre tolerance")
+                if alerte4: alertes_actives.append("Cash buffer insuffisant apres un crash de -50%")
+                if alerte5: alertes_actives.append(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil fixe : {seuil_variation_btc}%")
+                if alerte6: alertes_actives.append(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
+
+                if envoyer_alertes_email(email_alertes, alertes_actives):
+                    st.success(f"Alerte envoyee avec succes a {email_alertes}")
 
     # ── SECTION 10 : HEDGING ──
     st.subheader("10. Module hedging et couverture")
