@@ -236,89 +236,121 @@ footer a { color: #aaa; text-decoration: none; margin: 0 1rem; }
   <h2 class="section-title">Des offres adaptées à chaque entreprise</h2>
   <p class="section-sub">De la découverte à l'accompagnement stratégique sur mesure.</p>
 
-  <div style="margin-top: 3rem;">
+  <div style="margin-top: 3rem; display: flex; flex-direction: column; gap: 1rem;">
 
     <!-- OFFRE 1 : STARTER -->
-    <div style="background: white; border: 1px solid #eee; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <span style="background: #f0fdf4; color: #166534; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px;">Starter</span>
-          <h3 style="font-size: 1.4rem; font-weight: 700; margin: 0.8rem 0 0.3rem;">Gratuit</h3>
-          <p style="color: #666; font-size: 0.95rem; max-width: 500px;">Pour découvrir la plateforme et évaluer votre exposition crypto en quelques minutes.</p>
+    <div style="background: white; border: 1px solid #eee; border-radius: 12px; padding: 1.5rem 2rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <span style="background: #f0fdf4; color: #166534; font-size: 0.8rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; white-space: nowrap;">Starter</span>
+          <div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #1e1e3c;">Gratuit</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 2px;">Simulateur VaR · Score de risque · PDF simplifié</div>
+          </div>
         </div>
-        <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" style="background: #f4f4f4; color: #1e1e3c; padding: 0.8rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; white-space: nowrap;">Commencer gratuitement</a>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #eee;">
-        <p style="font-size: 0.9rem; color: #555;">✓ Simulateur VaR + scénarios</p>
-        <p style="font-size: 0.9rem; color: #555;">✓ Score de risque global</p>
-        <p style="font-size: 0.9rem; color: #555;">✓ PDF simplifié</p>
-        <p style="font-size: 0.9rem; color: #555;">✓ Email requis pour le PDF</p>
+        <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" style="background: #f4f4f4; color: #1e1e3c; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">Commencer gratuitement</a>
       </div>
     </div>
 
     <!-- OFFRE 2 : PROFESSIONAL -->
-    <div style="background: white; border: 2px solid #1e1e3c; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; position: relative;">
-      <div style="position: absolute; top: -12px; left: 24px; background: #1e1e3c; color: white; font-size: 0.8rem; font-weight: 600; padding: 4px 16px; border-radius: 20px;">Recommandé</div>
-      <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px;">Professional</span>
-      <h3 style="font-size: 1.4rem; font-weight: 700; margin: 0.8rem 0 0.3rem;">À partir de 99 EUR / mois</h3>
-      <p style="color: #666; font-size: 0.95rem; margin-bottom: 1.5rem;">Pour les PME, startups et petites équipes finance qui veulent gérer leur trésorerie crypto sérieusement.</p>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; flex-wrap: wrap;">
-
-        <div style="background: #f8f9ff; border-radius: 8px; padding: 1.2rem;">
-          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.8rem; color: #1e1e3c;">Plan Professional — 99 EUR/mois</div>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Dashboard avancé complet</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Monte Carlo + stress tests MiCA</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Recommandations d'allocation</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Suivi en temps réel + alertes</p>
-          <p style="font-size: 0.85rem; color: #555;">✓ Export PDF board-ready</p>
-          <a href="mailto:contact@cryptotreasury.com" style="display: inline-block; margin-top: 1rem; background: #1e1e3c; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600;">Démarrer</a>
+    <div style="background: white; border: 2px solid #1e1e3c; border-radius: 12px; overflow: hidden; position: relative;">
+      <div style="position: absolute; top: -1px; left: 24px; background: #1e1e3c; color: white; font-size: 0.75rem; font-weight: 600; padding: 3px 14px; border-radius: 0 0 8px 8px;">Recommandé</div>
+      <div onclick="toggleAccordion('pro')" style="padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.8rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; white-space: nowrap;">Professional</span>
+          <div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #1e1e3c;">À partir de 99 EUR / mois</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 2px;">Dashboard avancé · Monte Carlo · Alertes · PDF Pro</div>
+          </div>
         </div>
-
-        <div style="background: #f8f9ff; border-radius: 8px; padding: 1.2rem;">
-          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.8rem; color: #1e1e3c;">Plan Advanced / Corporate — 500 EUR/mois</div>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Tout le plan Professional</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ FX risk EUR/USD multi-devises</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Multi-actifs (BTC, ETH, stablecoins)</p>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Reporting MiCA / IFRS complet</p>
-          <p style="font-size: 0.85rem; color: #555;">✓ Support prioritaire + API</p>
-          <a href="mailto:contact@cryptotreasury.com" style="display: inline-block; margin-top: 1rem; background: #1e1e3c; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600;">Démarrer</a>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <a href="mailto:contact@cryptotreasury.com" onclick="event.stopPropagation()" style="background: #1e1e3c; color: white; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">Démarrer</a>
+          <span id="arrow-pro" style="font-size: 1.2rem; color: #1e1e3c; transition: transform 0.3s;">▼</span>
         </div>
+      </div>
 
+      <div id="accordion-pro" style="display: none; border-top: 1px solid #eee;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.5rem 2rem;">
+
+          <div style="background: #f8f9ff; border-radius: 8px; padding: 1.2rem;">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.8rem; color: #1e1e3c;">Plan Professional — 99 EUR/mois</div>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Dashboard avancé complet</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Monte Carlo + stress tests MiCA</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Recommandations d'allocation</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Suivi temps réel + alertes</p>
+            <p style="font-size: 0.85rem; color: #555;">✓ Export PDF board-ready</p>
+            <p style="font-size: 0.8rem; color: #888; margin-top: 0.8rem;">Cible : PME, startups, équipes finance</p>
+          </div>
+
+          <div style="background: #f8f9ff; border-radius: 8px; padding: 1.2rem;">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.8rem; color: #1e1e3c;">Plan Advanced / Corporate — 500 EUR/mois</div>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Tout le plan Professional</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ FX risk EUR/USD multi-devises</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Multi-actifs (BTC, ETH, stablecoins)</p>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.3rem;">✓ Reporting MiCA / IFRS complet</p>
+            <p style="font-size: 0.85rem; color: #555;">✓ Support prioritaire + API</p>
+            <p style="font-size: 0.8rem; color: #888; margin-top: 0.8rem;">Cible : exportateurs, scale-ups, fonds</p>
+          </div>
+
+        </div>
       </div>
     </div>
 
     <!-- OFFRE 3 : ENTERPRISE -->
-    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); border-radius: 12px; padding: 2rem; color: white;">
-      <span style="background: rgba(247,147,26,0.2); color: #f7931a; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.3);">Enterprise</span>
-      <h3 style="font-size: 1.4rem; font-weight: 700; margin: 0.8rem 0 0.3rem; color: white;">Sur mesure — À partir de 1 000 EUR</h3>
-      <p style="opacity: 0.85; font-size: 0.95rem; margin-bottom: 1.5rem;">Pour les grandes entreprises, fonds et institutions qui ont besoin d'un accompagnement stratégique complet.</p>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-
-        <div style="background: rgba(255,255,255,0.08); border-radius: 8px; padding: 1.2rem;">
-          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.8rem; color: white;">Audit Crypto Treasury — 1 000 à 5 000 EUR / mission</div>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Analyse complète de la trésorerie</p>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Rapport personnalisé</p>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Stratégie d'allocation sur mesure</p>
-          <p style="font-size: 0.85rem; opacity: 0.8;">✓ Plan de gestion du risque</p>
-          <a href="mailto:contact@cryptotreasury.com" style="display: inline-block; margin-top: 1rem; background: #f7931a; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600;">Demander un audit</a>
+    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); border-radius: 12px; overflow: hidden;">
+      <div onclick="toggleAccordion('enterprise')" style="padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <span style="background: rgba(247,147,26,0.2); color: #f7931a; font-size: 0.8rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.3); white-space: nowrap;">Enterprise</span>
+          <div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: white;">À partir de 1 000 EUR / mission</div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-top: 2px;">Audit · Accompagnement stratégique · Support CFO</div>
+          </div>
         </div>
-
-        <div style="background: rgba(255,255,255,0.08); border-radius: 8px; padding: 1.2rem;">
-          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.8rem; color: white;">Accompagnement Stratégique — 5 000 à 20 000 EUR+</div>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Suivi mensuel personnalisé</p>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Stratégie crypto sur mesure</p>
-          <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.3rem;">✓ Support direct CFO</p>
-          <p style="font-size: 0.85rem; opacity: 0.8;">✓ Accès plateforme Corporate inclus</p>
-          <a href="mailto:contact@cryptotreasury.com" style="display: inline-block; margin-top: 1rem; background: #f7931a; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600;">Nous contacter</a>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <a href="mailto:contact@cryptotreasury.com" onclick="event.stopPropagation()" style="background: #f7931a; color: white; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">Nous contacter</a>
+          <span id="arrow-enterprise" style="font-size: 1.2rem; color: white; transition: transform 0.3s;">▼</span>
         </div>
+      </div>
 
+      <div id="accordion-enterprise" style="display: none; border-top: 1px solid rgba(255,255,255,0.15);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.5rem 2rem;">
+
+          <div style="background: rgba(255,255,255,0.08); border-radius: 8px; padding: 1.2rem;">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.8rem; color: white;">Audit Crypto Treasury — 1 000 à 5 000 EUR / mission</div>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Analyse complète de la trésorerie</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Rapport personnalisé</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Stratégie d'allocation sur mesure</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75);">✓ Plan de gestion du risque</p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.08); border-radius: 8px; padding: 1.2rem;">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.8rem; color: white;">Accompagnement Stratégique — 5 000 à 20 000 EUR+</div>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Suivi mensuel personnalisé</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Stratégie crypto sur mesure</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 0.3rem;">✓ Support direct CFO</p>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.75);">✓ Accès plateforme Corporate inclus</p>
+          </div>
+
+        </div>
       </div>
     </div>
 
   </div>
 </div>
+
+<script>
+function toggleAccordion(id) {
+  const accordion = document.getElementById('accordion-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  if (accordion.style.display === 'none') {
+    accordion.style.display = 'block';
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    accordion.style.display = 'none';
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+</script>
 
 <div class="cta">
   <h2>Pret a securiser votre tresorerie crypto ?</h2>
