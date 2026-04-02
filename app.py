@@ -620,7 +620,7 @@ else:
             """
 
             resend.Emails.send({
-                "from": "CryptoTreasury <alertes@cryptotreasury.com>",
+                "from": "CryptoTreasury <onboarding@resend.dev>",
                 "to": email,
                 "subject": f"[CryptoTreasury] {len(alertes_actives)} alerte(s) detectee(s) sur votre portefeuille",
                 "html": html
