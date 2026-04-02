@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import requests
 import plotly.graph_objects as go
+import anthropic
 from fpdf import FPDF
 from datetime import datetime
 
@@ -573,6 +574,82 @@ st.markdown("""
     </small>
 </div>
 """, unsafe_allow_html=True)
+
+# ── SECTION 12 : ANALYSE IA CLAUDE ──
+st.subheader("12. Analyse IA — Powered by Claude")
+
+if st.button("Generer l'analyse IA de votre tresorerie"):
+    with st.spinner("Claude analyse votre portefeuille..."):
+        try:
+            client = anthropic.Anthropic(
+                api_key=st.secrets["ANTHROPIC_API_KEY"]
+            )
+            
+            prompt = f"""Tu es un expert en gestion de trésorerie d'entreprise et en crypto-actifs, spécialisé dans les normes IFRS 9 et MiCA.
+
+Voici le profil complet d'une entreprise :
+
+PROFIL ENTREPRISE :
+- Nom : {nom_entreprise}
+- Trésorerie totale : {tresorerie_totale:,.0f} EUR
+- Cash buffer minimum : {cash_buffer:,.0f} EUR
+- Revenus en USD : {revenus_usd}%
+- Horizon d'investissement : {horizon}
+- Tolérance au risque : {tolerance}
+
+EXPOSITION CRYPTO ACTUELLE :
+- Bitcoin : {montant_btc} BTC = {valeur_btc:,.0f} EUR
+- Ethereum : {montant_eth} ETH = {valeur_eth:,.0f} EUR
+- Valeur totale crypto : {valeur_totale_crypto:,.0f} EUR
+- Poids dans la trésorerie : {poids_crypto:.1f}%
+
+INDICATEURS DE RISQUE :
+- Score de risque global : {score}/100 ({profil})
+- VaR 95% journalière : {var_95:,.0f} EUR
+- VaR 99% journalière : {var_99:,.0f} EUR
+- Cash disponible après crash -50% : {cash_apres_crash:,.0f} EUR
+- Statut cash buffer : {"ALERTE" if cash_apres_crash < cash_buffer else "OK"}
+
+PRIX MARCHÉ :
+- Bitcoin : {prix_btc:,.0f} EUR ({var_btc_24h:+.2f}% / 24h)
+- Ethereum : {prix_eth:,.0f} EUR ({var_eth_24h:+.2f}% / 24h)
+
+Génère une analyse stratégique complète en français avec :
+1. Une évaluation globale de la situation (2-3 phrases)
+2. Les 3 points de vigilance principaux
+3. Une recommandation d'allocation précise et chiffrée
+4. Les actions concrètes à prendre dans les 30 prochains jours
+5. Le verdict final en une phrase
+
+Sois précis, professionnel, et parle comme un CFO s'adresserait à son conseil d'administration."""
+
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            
+            analyse = message.content[0].text
+            
+            st.markdown(f"""
+<div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); 
+     padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
+    <h3 style="color: white; margin-bottom: 1rem;">Analyse IA — {nom_entreprise}</h3>
+    <div style="line-height: 1.8; font-size: 0.95rem;">{analyse.replace(chr(10), '<br>')}</div>
+</div>
+""", unsafe_allow_html=True)
+            
+            st.success("Analyse generee avec succes — powered by Claude AI")
+            
+        except Exception as e:
+            st.error(f"Erreur API : {str(e)}")
+```
+
+Ensuite ajoutez `anthropic` dans votre fichier `requirements.txt` sur GitHub — ouvrez le fichier, cliquez sur le crayon, et ajoutez une ligne :
+```
+anthropic
 
 st.divider()
 st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
