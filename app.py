@@ -137,12 +137,70 @@ if st.session_state.user is None:
 # ════════════════════════════════════════
 else:
 
+    # ── LECTURE DU PLAN UTILISATEUR ──
+    if "plan_utilisateur" not in st.session_state:
+        try:
+            profil_data = supabase.table("profiles")\
+                .select("plan, entreprise")\
+                .eq("id", st.session_state.user.id)\
+                .execute()
+            if profil_data.data:
+                st.session_state.plan_utilisateur = profil_data.data[0]["plan"]
+                st.session_state.entreprise_utilisateur = profil_data.data[0].get("entreprise", "")
+            else:
+                st.session_state.plan_utilisateur = "starter"
+        except:
+            st.session_state.plan_utilisateur = "starter"
+
+    plan = st.session_state.plan_utilisateur
+
+    def bloc_pro(nom_fonctionnalite, plan_requis="professional"):
+        plans_ordre = ["starter", "professional", "corporate", "enterprise"]
+        plan_actuel_index = plans_ordre.index(plan) if plan in plans_ordre else 0
+        plan_requis_index = plans_ordre.index(plan_requis) if plan_requis in plans_ordre else 1
+        if plan_actuel_index < plan_requis_index:
+            st.markdown(f"""
+            <div style="background: #f8f9ff; border: 1px dashed #1e1e3c; border-radius: 10px;
+                 padding: 1.5rem; text-align: center; margin: 1rem 0;">
+                <p style="color: #1e1e3c; font-weight: 600; margin-bottom: 0.5rem;">
+                    Fonctionnalite reservee au plan {plan_requis.capitalize()}
+                </p>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                    Passez au plan superieur pour acceder a {nom_fonctionnalite}.
+                </p>
+                <a href="mailto:contact@cryptotreasury.com" 
+                   style="background: #1e1e3c; color: white; padding: 0.6rem 1.5rem;
+                   border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                   Passer au plan {plan_requis.capitalize()}
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+            return False
+        return True
+        
     # Bouton deconnexion discret en haut a droite
-    col1, col2 = st.columns([5, 1])
+   col1, col2 = st.columns([5, 1])
+    with col1:
+        plan_couleurs = {
+            "starter": "#22c55e",
+            "professional": "#3b82f6",
+            "corporate": "#8b5cf6",
+            "enterprise": "#f7931a"
+        }
+        couleur_plan = plan_couleurs.get(plan, "#22c55e")
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; gap:1rem; padding:0.5rem 0;">
+            <span style="font-size:1.4rem; font-weight:700; color:#1e1e3c;">₿ CryptoTreasury</span>
+            <span style="background:{couleur_plan}20; color:{couleur_plan}; font-size:0.75rem;
+                  font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid {couleur_plan}40;">
+                {plan.capitalize()}
+            </span>
+        </div>""", unsafe_allow_html=True)
     with col2:
         st.markdown(f"<small style='color:#888'>{st.session_state.user.email}</small>", unsafe_allow_html=True)
         if st.button("Deconnexion"):
             logout()
+            
 
     # ── VOTRE CODE ORIGINAL INTACT ──
 
@@ -347,71 +405,62 @@ else:
 
     st.divider()
 
-    # ── SECTION 6 : BACKTESTING ──
+   # ── SECTION 6 : BACKTESTING ──
     st.subheader("6. Backtesting — Et si vous aviez investi ?")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        periode_back = st.selectbox("Periode de backtesting", ["6 mois", "1 an", "2 ans", "3 ans"])
-    with col2:
-        alloc_back = st.slider("Allocation BTC hypothetique (%)", 1, 20, 3)
-
-    jours_map = {"6 mois": 180, "1 an": 365, "2 ans": 730, "3 ans": 1095}
-    jours_back = jours_map[periode_back]
-
-    if st.button("Lancer le backtesting"):
-        with st.spinner("Recuperation des donnees historiques..."):
-            try:
-                url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
-                params = {"vs_currency": "eur", "days": str(jours_back), "interval": "daily"}
-                headers = {"accept": "application/json"}
-                r = requests.get(url, params=params, headers=headers, timeout=15)
-                data = r.json()
-
-                if "prices" not in data:
-                    st.error("Donnees indisponibles. L'API CoinGecko a une limite gratuite — reessayez dans 1 minute.")
-                else:
-                    prices = [p[1] for p in data["prices"]]
-                    prix_depart = prices[0]
-                    prix_fin = prices[-1]
-                    performance_btc = ((prix_fin - prix_depart) / prix_depart) * 100
-
-                    poids_btc = alloc_back / 100
-                    poids_cash = 1 - poids_btc
-                    invest_btc = tresorerie_totale * poids_btc
-                    invest_cash = tresorerie_totale * poids_cash
-                    btc_achete = invest_btc / prix_depart
-                    valeur_btc_fin = btc_achete * prix_fin
-                    annees = jours_back / 365
-                    valeur_cash_fin = invest_cash * (1 + 0.03 * annees)
-                    valeur_totale_fin = valeur_btc_fin + valeur_cash_fin
-                    valeur_cash_pur = tresorerie_totale * (1 + 0.03 * annees)
-                    gain_vs_cash = valeur_totale_fin - valeur_cash_pur
-
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric(f"Performance BTC sur {periode_back}", f"{performance_btc:+.0f}%")
-                    col2.metric(f"Valeur portefeuille ({alloc_back}% BTC)", f"{valeur_totale_fin:,.0f} EUR")
-                    col3.metric("Gain vs cash pur", f"{gain_vs_cash:+,.0f} EUR")
-
-                    fig2 = go.Figure()
-                    fig2.add_trace(go.Scatter(
-                        y=prices,
-                        mode="lines",
-                        line=dict(color="#4f46e5", width=2),
-                        name="Prix BTC (EUR)"
-                    ))
-                    fig2.update_layout(
-                        title=f"Evolution du prix BTC sur {periode_back} (EUR)",
-                        yaxis_title="Prix (EUR)",
-                        xaxis_title="Jours",
-                        height=350
-                    )
-                    st.plotly_chart(fig2, use_container_width=True)
-
-            except requests.exceptions.Timeout:
-                st.error("Timeout — l'API met trop de temps a repondre. Reessayez dans quelques instants.")
-            except Exception as e:
-                st.error(f"Erreur inattendue : {str(e)}")
+    if bloc_pro("le backtesting historique", "professional"):
+        col1, col2 = st.columns(2)
+        with col1:
+            periode_back = st.selectbox("Periode de backtesting", ["6 mois", "1 an", "2 ans", "3 ans"])
+        with col2:
+            alloc_back = st.slider("Allocation BTC hypothetique (%)", 1, 20, 3)
+        jours_map = {"6 mois": 180, "1 an": 365, "2 ans": 730, "3 ans": 1095}
+        jours_back = jours_map[periode_back]
+        if st.button("Lancer le backtesting"):
+            with st.spinner("Recuperation des donnees historiques..."):
+                try:
+                    url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+                    params = {"vs_currency": "eur", "days": str(jours_back), "interval": "daily"}
+                    headers = {"accept": "application/json"}
+                    r = requests.get(url, params=params, headers=headers, timeout=15)
+                    data = r.json()
+                    if "prices" not in data:
+                        st.error("Donnees indisponibles. L'API CoinGecko a une limite gratuite — reessayez dans 1 minute.")
+                    else:
+                        prices = [p[1] for p in data["prices"]]
+                        prix_depart = prices[0]
+                        prix_fin = prices[-1]
+                        performance_btc = ((prix_fin - prix_depart) / prix_depart) * 100
+                        poids_btc = alloc_back / 100
+                        poids_cash = 1 - poids_btc
+                        invest_btc = tresorerie_totale * poids_btc
+                        invest_cash = tresorerie_totale * poids_cash
+                        btc_achete = invest_btc / prix_depart
+                        valeur_btc_fin = btc_achete * prix_fin
+                        annees = jours_back / 365
+                        valeur_cash_fin = invest_cash * (1 + 0.03 * annees)
+                        valeur_totale_fin = valeur_btc_fin + valeur_cash_fin
+                        valeur_cash_pur = tresorerie_totale * (1 + 0.03 * annees)
+                        gain_vs_cash = valeur_totale_fin - valeur_cash_pur
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric(f"Performance BTC sur {periode_back}", f"{performance_btc:+.0f}%")
+                        col2.metric(f"Valeur portefeuille ({alloc_back}% BTC)", f"{valeur_totale_fin:,.0f} EUR")
+                        col3.metric("Gain vs cash pur", f"{gain_vs_cash:+,.0f} EUR")
+                        fig2 = go.Figure()
+                        fig2.add_trace(go.Scatter(
+                            y=prices, mode="lines",
+                            line=dict(color="#4f46e5", width=2),
+                            name="Prix BTC (EUR)"
+                        ))
+                        fig2.update_layout(
+                            title=f"Evolution du prix BTC sur {periode_back} (EUR)",
+                            yaxis_title="Prix (EUR)", xaxis_title="Jours", height=350
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                except requests.exceptions.Timeout:
+                    st.error("Timeout — reessayez dans quelques instants.")
+                except Exception as e:
+                    st.error(f"Erreur inattendue : {str(e)}")
+    st.divider()
 
     # ── SECTION 7 : MONTE CARLO ──
     st.subheader("7. Simulation Monte Carlo — 30 jours")
@@ -547,120 +596,117 @@ else:
 
    # ── SECTION 9 : ALERTES PERSONNALISEES ──
     st.subheader("9. Alertes et seuils personnalises")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        seuil_perte = st.number_input("Perte maximale acceptable (EUR)", min_value=0, value=20000, step=1000)
-        seuil_poids = st.slider("Poids crypto maximum acceptable (%)", 1, 30, 10)
-        email_alertes = st.text_input("Email pour recevoir les alertes", value=st.session_state.user.email)
-    with col2:
-        seuil_var = st.number_input("VaR journaliere maximale acceptable (EUR)", min_value=0, value=10000, step=500)
-        seuil_crash = st.slider("Seuil d'alerte crash (%)", 10, 60, 30)
-        seuil_variation_btc = st.slider("Alerte variation BTC 24h (%)", 5, 30, 10)
-
-    alerte1 = var_99 > seuil_var
-    alerte2 = poids_crypto > seuil_poids
-    alerte3 = (valeur_totale_crypto * (seuil_crash/100)) > seuil_perte
-    alerte4 = cash_apres_crash < cash_buffer
-    alerte5 = abs(var_btc_24h) > seuil_variation_btc
-    alerte6 = var_btc_24h < -20
-
-    st.markdown("##### Etat de vos alertes")
-    col1, col2 = st.columns(2)
-    with col1:
-        if alerte1: st.error(f"VaR ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
-        else: st.success("VaR dans les limites acceptables")
-        if alerte2: st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
-        else: st.success("Poids crypto dans les limites")
-        if alerte5: st.warning(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil : {seuil_variation_btc}%")
-        else: st.success(f"Variation BTC 24h normale : {var_btc_24h:+.2f}%")
-    with col2:
-        if alerte3: st.error(f"Perte crash -{seuil_crash}% depasse votre tolerance")
-        else: st.success("Perte crash dans votre tolerance")
-        if alerte4: st.error("Cash buffer insuffisant apres crash -50%")
-        else: st.success("Cash buffer securise")
-        if alerte6: st.error(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
-        else: st.success("Pas de crash detecte")
-
-    nb_alertes = sum([alerte1, alerte2, alerte3, alerte4, alerte5, alerte6])
-    if nb_alertes == 0:
-        st.info("Aucune alerte active — votre portefeuille respecte tous vos seuils.")
-    elif nb_alertes <= 2:
-        st.warning(f"{nb_alertes} alerte(s) active(s) — revoyez votre exposition.")
-    else:
-        st.error(f"{nb_alertes} alertes actives — action immediate recommandee.")
-
-    def envoyer_alertes_email(email, alertes_actives):
-        try:
-            import resend
-            resend.api_key = st.secrets["RESEND_API_KEY"]
-
-            contenu_alertes = ""
-            for alerte in alertes_actives:
-                contenu_alertes += f"<li style='margin-bottom:8px;'>{alerte}</li>"
-
-            html = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); padding: 2rem; border-radius: 10px 10px 0 0; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 1.5rem;">₿ CryptoTreasury</h1>
-                    <p style="color: rgba(255,255,255,0.8); margin: 0.5rem 0 0;">Alerte de risque detectee</p>
-                </div>
-                <div style="background: white; padding: 2rem; border: 1px solid #eee;">
-                    <h2 style="color: #1e1e3c; font-size: 1.1rem;">Bonjour,</h2>
-                    <p style="color: #444;">Les alertes suivantes ont ete detectees sur votre portefeuille crypto :</p>
-                    <ul style="color: #444; background: #fff8f8; border-left: 4px solid #ef4444; padding: 1rem 1rem 1rem 2rem; border-radius: 4px;">
-                        {contenu_alertes}
-                    </ul>
-                    <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
-                        <p style="color: #444; margin: 0; font-size: 0.9rem;"><strong>Portefeuille actuel :</strong></p>
-                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">BTC : {montant_btc} ({valeur_btc:,.0f} EUR)</p>
-                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">ETH : {montant_eth} ({valeur_eth:,.0f} EUR)</p>
-                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">Valeur totale : {valeur_totale_crypto:,.0f} EUR</p>
-                        <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">VaR 99% : -{var_99:,.0f} EUR</p>
-                    </div>
-                    <div style="text-align: center; margin-top: 1.5rem;">
-                        <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/" 
-                           style="background: #1e1e3c; color: white; padding: 0.8rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                            Voir mon tableau de bord
-                        </a>
-                    </div>
-                </div>
-                <div style="background: #f8f9ff; padding: 1rem; border-radius: 0 0 10px 10px; text-align: center;">
-                    <p style="color: #888; font-size: 0.8rem; margin: 0;">
-                        CryptoTreasury — Conforme IFRS 9 et MiCA<br>
-                        Ce message est genere automatiquement — ne pas repondre
-                    </p>
-                </div>
-            </div>
-            """
-
-            resend.Emails.send({
-                "from": "CryptoTreasury <onboarding@resend.dev>",
-                "to": email,
-                "subject": f"[CryptoTreasury] {len(alertes_actives)} alerte(s) detectee(s) sur votre portefeuille",
-                "html": html
-            })
-            return True
-        except Exception as e:
-            st.error(f"Erreur envoi email : {str(e)}")
-            return False
-
-    if nb_alertes > 0:
-        col1, col2 = st.columns([3, 1])
+    if bloc_pro("les alertes personnalisees", "professional"):
+        col1, col2 = st.columns(2)
         with col1:
-            st.warning(f"{nb_alertes} alerte(s) active(s) — voulez-vous recevoir un email ?")
+            seuil_perte = st.number_input("Perte maximale acceptable (EUR)", min_value=0, value=20000, step=1000)
+            seuil_poids = st.slider("Poids crypto maximum acceptable (%)", 1, 30, 10)
+            email_alertes = st.text_input("Email pour recevoir les alertes", value=st.session_state.user.email)
         with col2:
-            if st.button("Envoyer l'alerte par email"):
-                alertes_actives = []
-                if alerte1: alertes_actives.append(f"VaR journaliere ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
-                if alerte2: alertes_actives.append(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil maximum ({seuil_poids}%)")
-                if alerte3: alertes_actives.append(f"Perte en cas de crash -{seuil_crash}% depasse votre tolerance")
-                if alerte4: alertes_actives.append("Cash buffer insuffisant apres un crash de -50%")
-                if alerte5: alertes_actives.append(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil fixe : {seuil_variation_btc}%")
-                if alerte6: alertes_actives.append(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
+            seuil_var = st.number_input("VaR journaliere maximale acceptable (EUR)", min_value=0, value=10000, step=500)
+            seuil_crash = st.slider("Seuil d'alerte crash (%)", 10, 60, 30)
+            seuil_variation_btc = st.slider("Alerte variation BTC 24h (%)", 5, 30, 10)
 
-                if envoyer_alertes_email(email_alertes, alertes_actives):
-                    st.success(f"Alerte envoyee avec succes a {email_alertes}")
+        alerte1 = var_99 > seuil_var
+        alerte2 = poids_crypto > seuil_poids
+        alerte3 = (valeur_totale_crypto * (seuil_crash/100)) > seuil_perte
+        alerte4 = cash_apres_crash < cash_buffer
+        alerte5 = abs(var_btc_24h) > seuil_variation_btc
+        alerte6 = var_btc_24h < -20
+
+        st.markdown("##### Etat de vos alertes")
+        col1, col2 = st.columns(2)
+        with col1:
+            if alerte1: st.error(f"VaR ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
+            else: st.success("VaR dans les limites acceptables")
+            if alerte2: st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
+            else: st.success("Poids crypto dans les limites")
+            if alerte5: st.warning(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil : {seuil_variation_btc}%")
+            else: st.success(f"Variation BTC 24h normale : {var_btc_24h:+.2f}%")
+        with col2:
+            if alerte3: st.error(f"Perte crash -{seuil_crash}% depasse votre tolerance")
+            else: st.success("Perte crash dans votre tolerance")
+            if alerte4: st.error("Cash buffer insuffisant apres crash -50%")
+            else: st.success("Cash buffer securise")
+            if alerte6: st.error(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
+            else: st.success("Pas de crash detecte")
+
+        nb_alertes = sum([alerte1, alerte2, alerte3, alerte4, alerte5, alerte6])
+        if nb_alertes == 0:
+            st.info("Aucune alerte active — votre portefeuille respecte tous vos seuils.")
+        elif nb_alertes <= 2:
+            st.warning(f"{nb_alertes} alerte(s) active(s) — revoyez votre exposition.")
+        else:
+            st.error(f"{nb_alertes} alertes actives — action immediate recommandee.")
+
+        def envoyer_alertes_email(email, alertes_actives):
+            try:
+                import resend
+                resend.api_key = st.secrets["RESEND_API_KEY"]
+                contenu_alertes = ""
+                for alerte in alertes_actives:
+                    contenu_alertes += f"<li style='margin-bottom:8px;'>{alerte}</li>"
+                html = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b); padding: 2rem; border-radius: 10px 10px 0 0; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 1.5rem;">₿ CryptoTreasury</h1>
+                        <p style="color: rgba(255,255,255,0.8); margin: 0.5rem 0 0;">Alerte de risque detectee</p>
+                    </div>
+                    <div style="background: white; padding: 2rem; border: 1px solid #eee;">
+                        <h2 style="color: #1e1e3c; font-size: 1.1rem;">Bonjour,</h2>
+                        <p style="color: #444;">Les alertes suivantes ont ete detectees sur votre portefeuille crypto :</p>
+                        <ul style="color: #444; background: #fff8f8; border-left: 4px solid #ef4444; padding: 1rem 1rem 1rem 2rem; border-radius: 4px;">
+                            {contenu_alertes}
+                        </ul>
+                        <div style="background: #f8f9ff; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                            <p style="color: #444; margin: 0; font-size: 0.9rem;"><strong>Portefeuille actuel :</strong></p>
+                            <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">BTC : {montant_btc} ({valeur_btc:,.0f} EUR)</p>
+                            <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">ETH : {montant_eth} ({valeur_eth:,.0f} EUR)</p>
+                            <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">Valeur totale : {valeur_totale_crypto:,.0f} EUR</p>
+                            <p style="color: #444; margin: 0.3rem 0; font-size: 0.9rem;">VaR 99% : -{var_99:,.0f} EUR</p>
+                        </div>
+                        <div style="text-align: center; margin-top: 1.5rem;">
+                            <a href="https://crypto-treasury-uz62zhahjwgyypukzemdng.streamlit.app/"
+                               style="background: #1e1e3c; color: white; padding: 0.8rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                Voir mon tableau de bord
+                            </a>
+                        </div>
+                    </div>
+                    <div style="background: #f8f9ff; padding: 1rem; border-radius: 0 0 10px 10px; text-align: center;">
+                        <p style="color: #888; font-size: 0.8rem; margin: 0;">
+                            CryptoTreasury — Conforme IFRS 9 et MiCA<br>
+                            Ce message est genere automatiquement — ne pas repondre
+                        </p>
+                    </div>
+                </div>
+                """
+                resend.Emails.send({
+                    "from": "CryptoTreasury <onboarding@resend.dev>",
+                    "to": email,
+                    "subject": f"[CryptoTreasury] {len(alertes_actives)} alerte(s) detectee(s) sur votre portefeuille",
+                    "html": html
+                })
+                return True
+            except Exception as e:
+                st.error(f"Erreur envoi email : {str(e)}")
+                return False
+
+        if nb_alertes > 0:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.warning(f"{nb_alertes} alerte(s) active(s) — voulez-vous recevoir un email ?")
+            with col2:
+                if st.button("Envoyer l'alerte par email"):
+                    alertes_actives = []
+                    if alerte1: alertes_actives.append(f"VaR journaliere ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
+                    if alerte2: alertes_actives.append(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil maximum ({seuil_poids}%)")
+                    if alerte3: alertes_actives.append(f"Perte en cas de crash -{seuil_crash}% depasse votre tolerance")
+                    if alerte4: alertes_actives.append("Cash buffer insuffisant apres un crash de -50%")
+                    if alerte5: alertes_actives.append(f"BTC a varie de {var_btc_24h:+.2f}% en 24h — seuil fixe : {seuil_variation_btc}%")
+                    if alerte6: alertes_actives.append(f"CRASH DETECTE : BTC en baisse de {var_btc_24h:.2f}% en 24h")
+                    if envoyer_alertes_email(email_alertes, alertes_actives):
+                        st.success(f"Alerte envoyee avec succes a {email_alertes}")
+    st.divider()
 
     # ── SECTION 10 : HEDGING ──
     st.subheader("10. Module hedging et couverture")
@@ -763,12 +809,12 @@ else:
 
     # ── SECTION 12 : ANALYSE IA CLAUDE ──
     st.subheader("12. Analyse IA — Powered by Claude")
-
-    if st.button("Generer l'analyse IA de votre tresorerie"):
-        with st.spinner("Claude analyse votre portefeuille..."):
-            try:
-                client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-                prompt = f"""Tu es un expert en gestion de tresorerie d'entreprise et en crypto-actifs, specialise dans les normes IFRS 9 et MiCA.
+    if bloc_pro("l'analyse IA", "professional"):
+        if st.button("Generer l'analyse IA de votre tresorerie"):
+            with st.spinner("Claude analyse votre portefeuille..."):
+                try:
+                    client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+                    prompt = f"""Tu es un expert en gestion de tresorerie d'entreprise et en crypto-actifs, specialise dans les normes IFRS 9 et MiCA.
 
 Voici le profil complet d'une entreprise :
 
@@ -806,163 +852,146 @@ Genere une analyse strategique complete en francais avec :
 
 Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'administration."""
 
-                message = client.messages.create(
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=1000,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                analyse = message.content[0].text
-                st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
-         padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
-        <h3 style="color: white; margin-bottom: 1rem;">Analyse IA — {nom_entreprise}</h3>
-        <div style="line-height: 1.8; font-size: 0.95rem;">{analyse.replace(chr(10), '<br>')}</div>
-    </div>
-    """, unsafe_allow_html=True)
-                st.success("Analyse generee avec succes — powered by Claude AI")
-            except Exception as e:
-                st.error(f"Erreur API : {str(e)}")
+                    message = client.messages.create(
+                        model="claude-sonnet-4-20250514",
+                        max_tokens=1000,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    analyse = message.content[0].text
+                    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
+             padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
+            <h3 style="color: white; margin-bottom: 1rem;">Analyse IA — {nom_entreprise}</h3>
+            <div style="line-height: 1.8; font-size: 0.95rem;">{analyse.replace(chr(10), '<br>')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+                    st.success("Analyse generee avec succes — powered by Claude AI")
+                except Exception as e:
+                    st.error(f"Erreur API : {str(e)}")
+    st.divider()
 
 # ── SECTION 13 : MODULE FX ──
     st.subheader("13. Module FX — Gestion du risque de change")
+    if bloc_pro("le module FX multi-devises", "corporate"):
+        @st.cache_data(ttl=3600)
+        def get_fx_rates():
+            try:
+                url = "https://api.exchangerate-api.com/v4/latest/USD"
+                r = requests.get(url, timeout=10)
+                data = r.json()
+                return data["rates"]
+            except:
+                return {"EUR": 0.92, "GBP": 0.79, "JPY": 149.5, "CHF": 0.89, "CAD": 1.36, "AUD": 1.53}
 
-    @st.cache_data(ttl=3600)
-    def get_fx_rates():
-        try:
-            url = "https://api.exchangerate-api.com/v4/latest/USD"
-            r = requests.get(url, timeout=10)
-            data = r.json()
-            return data["rates"]
-        except:
-            return {"EUR": 0.92, "GBP": 0.79, "JPY": 149.5, "CHF": 0.89, "CAD": 1.36, "AUD": 1.53}
+        fx_rates = get_fx_rates()
+        eur_usd = 1 / fx_rates.get("EUR", 0.92)
 
-    fx_rates = get_fx_rates()
-    eur_usd = 1 / fx_rates.get("EUR", 0.92)
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
+             padding: 1.5rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
+            <h4 style="color:white; margin-bottom:0.5rem;">Taux de change en temps reel</h4>
+            <p style="opacity:0.85;">EUR/USD : <strong>{eur_usd:.4f}</strong> —
+            GBP/USD : <strong>{1/fx_rates.get('GBP', 0.79):.4f}</strong> —
+            USD/JPY : <strong>{fx_rates.get('JPY', 149.5):.2f}</strong> —
+            USD/CHF : <strong>{fx_rates.get('CHF', 0.89):.4f}</strong>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
-         padding: 1.5rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
-        <h4 style="color:white; margin-bottom:0.5rem;">Taux de change en temps reel</h4>
-        <p style="opacity:0.85;">EUR/USD : <strong>{eur_usd:.4f}</strong> —
-        GBP/USD : <strong>{1/fx_rates.get('GBP', 0.79):.4f}</strong> —
-        USD/JPY : <strong>{fx_rates.get('JPY', 149.5):.2f}</strong> —
-        USD/CHF : <strong>{fx_rates.get('CHF', 0.89):.4f}</strong>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("#### Profil de revenus en devises etrangeres")
+        col1, col2 = st.columns(2)
+        with col1:
+            revenus_annuels_usd = st.number_input("Revenus annuels en USD", min_value=0, value=500000, step=10000)
+            revenus_annuels_gbp = st.number_input("Revenus annuels en GBP", min_value=0, value=0, step=10000)
+            revenus_annuels_jpy = st.number_input("Revenus annuels en JPY", min_value=0, value=0, step=1000000)
+        with col2:
+            revenus_annuels_chf = st.number_input("Revenus annuels en CHF", min_value=0, value=0, step=10000)
+            revenus_annuels_cad = st.number_input("Revenus annuels en CAD", min_value=0, value=0, step=10000)
+            revenus_annuels_aud = st.number_input("Revenus annuels en AUD", min_value=0, value=0, step=10000)
 
-    st.markdown("#### Profil de revenus en devises etrangeres")
-    col1, col2 = st.columns(2)
-    with col1:
-        revenus_annuels_usd = st.number_input("Revenus annuels en USD", min_value=0, value=500000, step=10000)
-        revenus_annuels_gbp = st.number_input("Revenus annuels en GBP", min_value=0, value=0, step=10000)
-        revenus_annuels_jpy = st.number_input("Revenus annuels en JPY", min_value=0, value=0, step=1000000)
-    with col2:
-        revenus_annuels_chf = st.number_input("Revenus annuels en CHF", min_value=0, value=0, step=10000)
-        revenus_annuels_cad = st.number_input("Revenus annuels en CAD", min_value=0, value=0, step=10000)
-        revenus_annuels_aud = st.number_input("Revenus annuels en AUD", min_value=0, value=0, step=10000)
-
-    total_revenus_eur = (
-        revenus_annuels_usd * fx_rates.get("EUR", 0.92) / 1 +
-        revenus_annuels_gbp / fx_rates.get("GBP", 0.79) * fx_rates.get("EUR", 0.92) +
-        revenus_annuels_jpy / fx_rates.get("JPY", 149.5) * fx_rates.get("EUR", 0.92) +
-        revenus_annuels_chf / fx_rates.get("CHF", 0.89) * fx_rates.get("EUR", 0.92) +
-        revenus_annuels_cad / fx_rates.get("CAD", 1.36) * fx_rates.get("EUR", 0.92) +
-        revenus_annuels_aud / fx_rates.get("AUD", 1.53) * fx_rates.get("EUR", 0.92)
-    )
-
-    st.divider()
-    st.markdown("#### Risque de change sur vos revenus")
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total revenus en EUR", f"{total_revenus_eur:,.0f} EUR")
-    col2.metric("Impact depreciation USD -10%", f"-{total_revenus_eur * 0.10:,.0f} EUR")
-    col3.metric("Impact depreciation USD -20%", f"-{total_revenus_eur * 0.20:,.0f} EUR")
-
-    vol_fx = 0.08
-    var_fx_95 = total_revenus_eur * vol_fx * 1.645
-    var_fx_99 = total_revenus_eur * vol_fx * 2.326
-
-    col1, col2 = st.columns(2)
-    col1.metric("VaR FX 95% (annuelle)", f"-{var_fx_95:,.0f} EUR")
-    col2.metric("VaR FX 99% (annuelle)", f"-{var_fx_99:,.0f} EUR")
-
-    if revenus_annuels_usd > 0:
-        scenarios_fx = {
-            "USD -20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.80),
-            "USD -10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.90),
-            "Actuel": revenus_annuels_usd * fx_rates.get("EUR", 0.92),
-            "USD +10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.10),
-            "USD +20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.20),
-        }
-        fig_fx = go.Figure()
-        fig_fx.add_trace(go.Bar(
-            x=list(scenarios_fx.keys()),
-            y=list(scenarios_fx.values()),
-            marker_color=["#ef4444", "#f59e0b", "#6366f1", "#22c55e", "#15803d"]
-        ))
-        fig_fx.update_layout(
-            title="Impact des variations EUR/USD sur vos revenus USD (EUR)",
-            yaxis_title="Revenus en EUR",
-            height=350
+        total_revenus_eur = (
+            revenus_annuels_usd * fx_rates.get("EUR", 0.92) +
+            revenus_annuels_gbp / fx_rates.get("GBP", 0.79) * fx_rates.get("EUR", 0.92) +
+            revenus_annuels_jpy / fx_rates.get("JPY", 149.5) * fx_rates.get("EUR", 0.92) +
+            revenus_annuels_chf / fx_rates.get("CHF", 0.89) * fx_rates.get("EUR", 0.92) +
+            revenus_annuels_cad / fx_rates.get("CAD", 1.36) * fx_rates.get("EUR", 0.92) +
+            revenus_annuels_aud / fx_rates.get("AUD", 1.53) * fx_rates.get("EUR", 0.92)
         )
-        st.plotly_chart(fig_fx, use_container_width=True)
 
+        st.divider()
+        st.markdown("#### Risque de change sur vos revenus")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total revenus en EUR", f"{total_revenus_eur:,.0f} EUR")
+        col2.metric("Impact depreciation USD -10%", f"-{total_revenus_eur * 0.10:,.0f} EUR")
+        col3.metric("Impact depreciation USD -20%", f"-{total_revenus_eur * 0.20:,.0f} EUR")
+
+        vol_fx = 0.08
+        var_fx_95 = total_revenus_eur * vol_fx * 1.645
+        var_fx_99 = total_revenus_eur * vol_fx * 2.326
+
+        col1, col2 = st.columns(2)
+        col1.metric("VaR FX 95% (annuelle)", f"-{var_fx_95:,.0f} EUR")
+        col2.metric("VaR FX 99% (annuelle)", f"-{var_fx_99:,.0f} EUR")
+
+        if revenus_annuels_usd > 0:
+            scenarios_fx = {
+                "USD -20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.80),
+                "USD -10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 0.90),
+                "Actuel": revenus_annuels_usd * fx_rates.get("EUR", 0.92),
+                "USD +10%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.10),
+                "USD +20%": revenus_annuels_usd * (fx_rates.get("EUR", 0.92) * 1.20),
+            }
+            fig_fx = go.Figure()
+            fig_fx.add_trace(go.Bar(
+                x=list(scenarios_fx.keys()),
+                y=list(scenarios_fx.values()),
+                marker_color=["#ef4444", "#f59e0b", "#6366f1", "#22c55e", "#15803d"]
+            ))
+            fig_fx.update_layout(
+                title="Impact des variations EUR/USD sur vos revenus USD (EUR)",
+                yaxis_title="Revenus en EUR", height=350
+            )
+            st.plotly_chart(fig_fx, use_container_width=True)
+
+        st.divider()
+        st.markdown("#### Simulation de couverture FX")
+        col1, col2 = st.columns(2)
+        with col1:
+            type_couverture = st.selectbox("Type de couverture", ["Forward (vente a terme)", "Options de change", "Couverture naturelle"])
+            pct_couverture_fx = st.slider("Pourcentage a couvrir (%)", 0, 100, 50)
+            duree_couverture = st.selectbox("Duree de la couverture", ["3 mois", "6 mois", "1 an"])
+        with col2:
+            cout_couverture_map = {"Forward (vente a terme)": 0.5, "Options de change": 1.5, "Couverture naturelle": 0.2}
+            cout_pct = cout_couverture_map[type_couverture]
+            montant_couvert = total_revenus_eur * (pct_couverture_fx / 100)
+            montant_non_couvert = total_revenus_eur * (1 - pct_couverture_fx / 100)
+            cout_couverture_eur = montant_couvert * (cout_pct / 100)
+            var_residuelle = montant_non_couvert * vol_fx * 2.326
+            st.metric("Montant couvert", f"{montant_couvert:,.0f} EUR")
+            st.metric("Cout de la couverture", f"{cout_couverture_eur:,.0f} EUR/an")
+            st.metric("VaR residuelle 99%", f"-{var_residuelle:,.0f} EUR")
+
+        reduction_var_fx = ((var_fx_99 - var_residuelle) / var_fx_99 * 100) if var_fx_99 > 0 else 0
+
+        fig_fx2 = go.Figure()
+        fig_fx2.add_trace(go.Bar(name="Sans couverture", x=["VaR FX 95%", "VaR FX 99%"], y=[var_fx_95, var_fx_99], marker_color="#ef4444"))
+        fig_fx2.add_trace(go.Bar(name=f"Avec couverture {pct_couverture_fx}%", x=["VaR FX 95%", "VaR FX 99%"], y=[montant_non_couvert * vol_fx * 1.645, var_residuelle], marker_color="#22c55e"))
+        fig_fx2.update_layout(title="Impact de la couverture sur le risque FX", barmode="group", height=320)
+        st.plotly_chart(fig_fx2, use_container_width=True)
+
+        if reduction_var_fx > 0:
+            st.info(f"Une couverture {type_couverture} a {pct_couverture_fx}% reduit votre risque FX de {reduction_var_fx:.0f}% pour un cout de {cout_couverture_eur:,.0f} EUR/an.")
+
+        st.markdown("""
+        <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px;
+             border-left: 4px solid #0ea5e9; margin-top: 1rem;">
+            <small style="color: #0369a1;">
+            <strong>Note :</strong> Les taux de change sont fournis par ExchangeRate-API.
+            Les couts de couverture sont indicatifs. Consultez votre banque ou un courtier specialise.
+            </small>
+        </div>
+        """, unsafe_allow_html=True)
     st.divider()
-    st.markdown("#### Simulation de couverture FX")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        type_couverture = st.selectbox("Type de couverture", ["Forward (vente a terme)", "Options de change", "Couverture naturelle"])
-        pct_couverture_fx = st.slider("Pourcentage a couvrir (%)", 0, 100, 50)
-        duree_couverture = st.selectbox("Duree de la couverture", ["3 mois", "6 mois", "1 an"])
-    with col2:
-        cout_couverture_map = {"Forward (vente a terme)": 0.5, "Options de change": 1.5, "Couverture naturelle": 0.2}
-        cout_pct = cout_couverture_map[type_couverture]
-        montant_couvert = total_revenus_eur * (pct_couverture_fx / 100)
-        montant_non_couvert = total_revenus_eur * (1 - pct_couverture_fx / 100)
-        cout_couverture_eur = montant_couvert * (cout_pct / 100)
-        var_residuelle = montant_non_couvert * vol_fx * 2.326
-
-        st.metric("Montant couvert", f"{montant_couvert:,.0f} EUR")
-        st.metric("Cout de la couverture", f"{cout_couverture_eur:,.0f} EUR/an")
-        st.metric("VaR residuelle 99%", f"-{var_residuelle:,.0f} EUR")
-
-    reduction_var_fx = ((var_fx_99 - var_residuelle) / var_fx_99 * 100) if var_fx_99 > 0 else 0
-
-    fig_fx2 = go.Figure()
-    fig_fx2.add_trace(go.Bar(
-        name="Sans couverture",
-        x=["VaR FX 95%", "VaR FX 99%"],
-        y=[var_fx_95, var_fx_99],
-        marker_color="#ef4444"
-    ))
-    fig_fx2.add_trace(go.Bar(
-        name=f"Avec couverture {pct_couverture_fx}%",
-        x=["VaR FX 95%", "VaR FX 99%"],
-        y=[montant_non_couvert * vol_fx * 1.645, var_residuelle],
-        marker_color="#22c55e"
-    ))
-    fig_fx2.update_layout(
-        title="Impact de la couverture sur le risque FX",
-        barmode="group",
-        height=320
-    )
-    st.plotly_chart(fig_fx2, use_container_width=True)
-
-    if reduction_var_fx > 0:
-        st.info(f"Une couverture {type_couverture} a {pct_couverture_fx}% reduit votre risque FX de {reduction_var_fx:.0f}% pour un cout de {cout_couverture_eur:,.0f} EUR/an.")
-
-    st.markdown("""
-    <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px;
-         border-left: 4px solid #0ea5e9; margin-top: 1rem;">
-        <small style="color: #0369a1;">
-        <strong>Note :</strong> Les taux de change sont fournis par ExchangeRate-API.
-        Les couts de couverture sont indicatifs. Consultez votre banque ou un courtier
-        specialise pour des cotations precises.
-        </small>
-    </div>
-    """, unsafe_allow_html=True)
 
 # ── SECTION 14 : HISTORIQUE DES RAPPORTS ──
     st.subheader("14. Historique des rapports")
