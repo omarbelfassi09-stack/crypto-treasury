@@ -140,16 +140,55 @@ else:
     # ── LECTURE DU PLAN UTILISATEUR ──
     if True:
         try:
+            import stripe
+            stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
+
+            # Vérifier si l'utilisateur a un abonnement actif dans Stripe
+            customers = stripe.Customer.list(email=st.session_state.user.email, limit=1)
+
+            plan_stripe = "starter"
+            if customers.data:
+                customer = customers.data[0]
+                subscriptions = stripe.Subscription.list(
+                    customer=customer.id,
+                    status="active",
+                    limit=1
+                )
+                if subscriptions.data:
+                    sub = subscriptions.data[0]
+                    price_id = sub["items"]["data"][0]["price"]["id"]
+
+                    pro_prices = [
+                        st.secrets["STRIPE_PRICE_PRO_MONTHLY"],
+                        st.secrets["STRIPE_PRICE_PRO_ANNUAL"]
+                    ]
+                    corp_prices = [
+                        st.secrets["STRIPE_PRICE_CORP_MONTHLY"],
+                        st.secrets["STRIPE_PRICE_CORP_ANNUAL"]
+                    ]
+
+                    if price_id in corp_prices:
+                        plan_stripe = "corporate"
+                    elif price_id in pro_prices:
+                        plan_stripe = "professional"
+
+            # Mettre à jour Supabase si le plan a changé
             profil_data = supabase.table("profiles")\
-                .select("plan, entreprise")\
+                .select("plan")\
                 .eq("id", st.session_state.user.id)\
                 .execute()
-            if profil_data.data:
-                st.session_state.plan_utilisateur = profil_data.data[0]["plan"]
-                st.session_state.entreprise_utilisateur = profil_data.data[0].get("entreprise", "")
-            else:
-                st.session_state.plan_utilisateur = "starter"
-        except:
+
+            plan_actuel = profil_data.data[0]["plan"] if profil_data.data else "starter"
+
+            if plan_stripe != plan_actuel:
+                supabase.table("profiles")\
+                    .update({"plan": plan_stripe})\
+                    .eq("id", st.session_state.user.id)\
+                    .execute()
+
+            st.session_state.plan_utilisateur = plan_stripe
+
+        except Exception as e:
             st.session_state.plan_utilisateur = "starter"
 
     plan = st.session_state.plan_utilisateur
