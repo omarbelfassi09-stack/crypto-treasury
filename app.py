@@ -18,12 +18,15 @@ supabase = create_client(
 # ── GESTION SESSION ──
 if "user" not in st.session_state:
     st.session_state.user = None
+if "page" not in st.session_state:
+    st.session_state.page = "landing"
 
 # ── FONCTIONS AUTH ──
 def login(email, password):
     try:
         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
         st.session_state.user = res.user
+        st.session_state.page = "app"
         return True, None
     except Exception as e:
         return False, str(e)
@@ -39,6 +42,7 @@ def register(email, password, entreprise):
                 "plan": "free"
             }).execute()
             st.session_state.user = res.user
+            st.session_state.page = "app"
         return True, None
     except Exception as e:
         return False, str(e)
@@ -46,19 +50,192 @@ def register(email, password, entreprise):
 def logout():
     supabase.auth.sign_out()
     st.session_state.user = None
+    st.session_state.page = "landing"
     st.rerun()
 
-# ── PAGE AUTH ──
-if st.session_state.user is None:
+# ════════════════════════════════════════
+# ── PAGE LANDING ──
+# ════════════════════════════════════════
+if st.session_state.page == "landing" and st.session_state.user is None:
+
     st.markdown("""
-    <div style="text-align:center; padding: 2rem 0 1rem;">
-        <h1 style="font-size:2.5rem; color:#1e1e3c;">₿ CryptoTreasury</h1>
-        <p style="color:#666; font-size:1.1rem;">Plateforme de gestion des risques crypto pour entreprises</p>
+    <style>
+    .hero { background: linear-gradient(135deg, #1e1e3c, #2d2d6b); padding: 4rem 2rem;
+            border-radius: 16px; color: white; text-align: center; margin-bottom: 2rem; }
+    .hero h1 { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; }
+    .hero p { font-size: 1.2rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2rem; }
+    .badge { display: inline-block; background: rgba(247,147,26,0.2); color: #f7931a;
+             padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.85rem;
+             border: 1px solid rgba(247,147,26,0.4); margin-bottom: 1.5rem; }
+    .feature-card { background: white; border: 1px solid #eee; border-radius: 12px;
+                    padding: 1.5rem; height: 100%; }
+    .pricing-card { background: white; border: 1px solid #eee; border-radius: 12px;
+                    padding: 2rem; text-align: center; }
+    .pricing-featured { border: 2px solid #1e1e3c !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Hero
+    st.markdown("""
+    <div class="hero">
+        <div class="badge">Conforme MiCA et IFRS 9</div>
+        <h1>₿ CryptoTreasury</h1>
+        <p>La premiere plateforme de gestion des risques crypto pour les entreprises et CFO europeens.</p>
     </div>
     """, unsafe_allow_html=True)
 
+    # Stats
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Simulations", "1 000+", "par analyse")
+    col2.metric("Donnees", "Temps reel", "CoinGecko")
+    col3.metric("Norme", "IFRS 9", "conforme")
+    col4.metric("Regulation", "MiCA", "conforme")
+
+    st.divider()
+
+    # Fonctionnalites
+    st.markdown("### Tout ce dont votre CFO a besoin")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Analyse de risque</h4>
+            <p style="color:#666; font-size:0.9rem;">VaR 95% et 99%, score de risque global, alertes personnalisees conformes IFRS 9.</p>
+        </div>""", unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Simulation Monte Carlo</h4>
+            <p style="color:#666; font-size:0.9rem;">1000 scenarios de marche simules pour visualiser la distribution des risques sur 30 jours.</p>
+        </div>""", unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Analyse IA</h4>
+            <p style="color:#666; font-size:0.9rem;">Recommandations strategiques personnalisees generees par intelligence artificielle.</p>
+        </div>""", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Backtesting 3 ans</h4>
+            <p style="color:#666; font-size:0.9rem;">Simulez l'impact historique d'une allocation BTC sur votre tresorerie.</p>
+        </div>""", unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Module hedging</h4>
+            <p style="color:#666; font-size:0.9rem;">Simulez l'impact d'une couverture partielle via futures sur votre VaR.</p>
+        </div>""", unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>Rapport PDF board-ready</h4>
+            <p style="color:#666; font-size:0.9rem;">Rapport professionnel pret pour votre conseil d'administration en un clic.</p>
+        </div>""", unsafe_allow_html=True)
+
+    st.divider()
+
+    # Pricing
+    st.markdown("### Tarifs simples et transparents")
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    with col1:
+        st.markdown("""
+        <div class="pricing-card">
+            <h3>Freemium</h3>
+            <h2 style="color:#1e1e3c;">0 EUR<span style="font-size:1rem;font-weight:400;color:#888"> / mois</span></h2>
+            <hr>
+            <p style="text-align:left; font-size:0.9rem; color:#555;">
+            ✓ Prix BTC/ETH en temps reel<br>
+            ✓ VaR et score de risque<br>
+            ✓ Monte Carlo<br>
+            ✓ Rapport PDF basique<br>
+            ✓ 1 portefeuille
+            </p>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Commencer gratuitement", use_container_width=True, key="btn_free"):
+            st.session_state.page = "auth"
+            st.session_state.auth_plan = "free"
+            st.rerun()
+
+    with col2:
+        st.markdown("""
+        <div class="pricing-card pricing-featured">
+            <p style="background:#1e1e3c;color:white;padding:4px;border-radius:4px;font-size:0.8rem;">Recommande</p>
+            <h3>Pro</h3>
+            <h2 style="color:#1e1e3c;">299 EUR<span style="font-size:1rem;font-weight:400;color:#888"> / mois</span></h2>
+            <hr>
+            <p style="text-align:left; font-size:0.9rem; color:#555;">
+            ✓ Tout le plan Freemium<br>
+            ✓ Analyse IA illimitee<br>
+            ✓ Backtesting historique<br>
+            ✓ Module hedging<br>
+            ✓ Rapport board-ready<br>
+            ✓ Alertes personnalisees<br>
+            ✓ Support prioritaire
+            </p>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Choisir le plan Pro", use_container_width=True, key="btn_pro"):
+            st.session_state.page = "auth"
+            st.session_state.auth_plan = "pro"
+            st.rerun()
+
+    with col3:
+        st.markdown("""
+        <div class="pricing-card">
+            <h3>Enterprise</h3>
+            <h2 style="color:#1e1e3c;">Sur mesure</h2>
+            <hr>
+            <p style="text-align:left; font-size:0.9rem; color:#555;">
+            ✓ Tout le plan Pro<br>
+            ✓ Multi-portefeuilles<br>
+            ✓ Integrations API<br>
+            ✓ SLA garanti<br>
+            ✓ Compte manager dedie<br>
+            ✓ Formation equipe
+            </p>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Nous contacter", use_container_width=True, key="btn_enterprise"):
+            st.session_state.page = "auth"
+            st.session_state.auth_plan = "enterprise"
+            st.rerun()
+
+    st.divider()
+    st.markdown("""
+    <div style="text-align:center; color:#888; font-size:0.85rem; padding: 1rem 0;">
+        CryptoTreasury 2026 — Conforme IFRS 9 et MiCA —
+        Ce service ne constitue pas un conseil en investissement
+    </div>""", unsafe_allow_html=True)
+
+# ════════════════════════════════════════
+# ── PAGE AUTH ──
+# ════════════════════════════════════════
+elif st.session_state.page == "auth" and st.session_state.user is None:
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
+        if st.button("← Retour a l'accueil"):
+            st.session_state.page = "landing"
+            st.rerun()
+
+        plan = st.session_state.get("auth_plan", "free")
+        if plan == "pro":
+            st.markdown("""
+            <div style="background:#1e1e3c;color:white;padding:1rem;border-radius:8px;text-align:center;margin-bottom:1rem;">
+                Plan Pro selectione — 299 EUR / mois
+            </div>""", unsafe_allow_html=True)
+        elif plan == "enterprise":
+            st.markdown("""
+            <div style="background:#1e1e3c;color:white;padding:1rem;border-radius:8px;text-align:center;margin-bottom:1rem;">
+                Plan Enterprise — Notre equipe vous contactera
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("### ₿ CryptoTreasury")
         mode = st.radio("", ["Se connecter", "Creer un compte"], horizontal=True, label_visibility="collapsed")
 
         if mode == "Se connecter":
@@ -97,16 +274,24 @@ if st.session_state.user is None:
                     else:
                         st.error(f"Erreur : {err}")
 
-# ── APPLICATION PRINCIPALE ──
-else:
-    # Bouton déconnexion
+# ════════════════════════════════════════
+# ── PAGE APPLICATION ──
+# ════════════════════════════════════════
+elif st.session_state.user is not None:
+    st.session_state.page = "app"
+
+    # Navbar
     col1, col2 = st.columns([5, 1])
+    with col1:
+        st.markdown("""
+        <div style="display:flex; align-items:center; gap:1rem; padding:0.5rem 0;">
+            <span style="font-size:1.4rem; font-weight:700; color:#1e1e3c;">₿ CryptoTreasury</span>
+        </div>""", unsafe_allow_html=True)
     with col2:
         st.markdown(f"<small style='color:#666'>{st.session_state.user.email}</small>", unsafe_allow_html=True)
         if st.button("Deconnexion"):
             logout()
 
-    # ── TOUT VOTRE CODE ORIGINAL ICI ──
     st.markdown("""
     <style>
     .main-header {
@@ -158,6 +343,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 1 : PROFIL TRESORERIE CFO ──
     st.subheader("1. Profil de tresorerie de votre entreprise")
     col1, col2 = st.columns(2)
     with col1:
@@ -171,6 +357,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 2 : EXPOSITION CRYPTO ──
     st.subheader("2. Exposition crypto actuelle")
     col1, col2 = st.columns(2)
     with col1:
@@ -192,6 +379,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 3 : TABLEAU DE BORD CFO ──
     st.subheader("3. Tableau de bord tresorerie")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Valeur crypto totale", f"{valeur_totale_crypto:,.0f} EUR")
@@ -206,6 +394,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 4 : SCORE DE RISQUE ──
     st.subheader("4. Score de risque global")
     score = 50
     if tolerance == "Faible": score -= 20
@@ -235,6 +424,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 5 : BENCHMARK ──
     st.subheader("5. Benchmark — Impact BTC sur votre tresorerie")
     allocations = [0, 1, 2, 3, 5, 7, 10]
     resultats_bench = []
@@ -264,6 +454,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 6 : BACKTESTING ──
     st.subheader("6. Backtesting — Et si vous aviez investi ?")
     col1, col2 = st.columns(2)
     with col1:
@@ -309,6 +500,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 7 : MONTE CARLO ──
     st.subheader("7. Simulation Monte Carlo — 30 jours")
     if st.button("Lancer la simulation Monte Carlo"):
         with st.spinner("Simulation de 1000 scenarios..."):
@@ -337,6 +529,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 8 : RAPPORT PDF ──
     st.subheader("8. Rapport PDF board-ready")
     if st.button("Generer le rapport PDF"):
         pdf = FPDF()
@@ -419,6 +612,7 @@ else:
         )
         st.success("Rapport board-ready genere avec succes !")
 
+    # ── SECTION 9 : ALERTES PERSONNALISEES ──
     st.subheader("9. Alertes et seuils personnalises")
     col1, col2 = st.columns(2)
     with col1:
@@ -435,14 +629,14 @@ else:
     col1, col2 = st.columns(2)
     with col1:
         if alerte1: st.error(f"VaR ({var_99:,.0f} EUR) depasse votre seuil ({seuil_var:,.0f} EUR)")
-        else: st.success(f"VaR dans les limites acceptables")
+        else: st.success("VaR dans les limites acceptables")
         if alerte2: st.error(f"Poids crypto ({poids_crypto:.1f}%) depasse votre seuil ({seuil_poids}%)")
-        else: st.success(f"Poids crypto dans les limites")
+        else: st.success("Poids crypto dans les limites")
     with col2:
         if alerte3: st.error(f"Perte crash -{seuil_crash}% depasse votre tolerance")
-        else: st.success(f"Perte crash dans votre tolerance")
-        if alerte4: st.error(f"Cash buffer insuffisant apres crash -50%")
-        else: st.success(f"Cash buffer securise")
+        else: st.success("Perte crash dans votre tolerance")
+        if alerte4: st.error("Cash buffer insuffisant apres crash -50%")
+        else: st.success("Cash buffer securise")
 
     nb_alertes = sum([alerte1, alerte2, alerte3, alerte4])
     if nb_alertes == 0: st.info("Aucune alerte active.")
@@ -451,6 +645,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 10 : HEDGING ──
     st.subheader("10. Module hedging et couverture")
     col1, col2 = st.columns(2)
     with col1:
@@ -477,7 +672,8 @@ else:
 
     st.divider()
 
-    st.subheader("11. Recommandation strategique IA")
+    # ── SECTION 11 : RECOMMANDATION STRATEGIQUE ──
+    st.subheader("11. Recommandation strategique")
     tresorerie_investissable = tresorerie_totale - cash_buffer
     if tolerance == "Faible": alloc_min, alloc_max = 1, 3
     elif tolerance == "Moderee": alloc_min, alloc_max = 3, 7
@@ -491,11 +687,10 @@ else:
     ecart_actuel = montant_recommande - valeur_totale_crypto
 
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
-         padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
-        <h3 style="color: white; margin-bottom: 1rem;">Recommandation personnalisee</h3>
-        <p style="font-size: 1.1rem;">Profil <strong>{tolerance}</strong> | Horizon <strong>{horizon}</strong> | Allocation recommandee : <strong>{alloc_min}-{alloc_max}% en BTC</strong></p>
-        <p style="font-size: 1rem; opacity: 0.85;">Montant optimal : <strong>{montant_recommande:,.0f} EUR</strong> ({btc_recommande:.3f} BTC au prix actuel)</p>
+    <div style="background:linear-gradient(135deg,#1e1e3c,#2d2d6b);padding:2rem;border-radius:10px;color:white;margin-bottom:1rem;">
+        <h3 style="color:white;margin-bottom:1rem;">Recommandation personnalisee</h3>
+        <p style="font-size:1.1rem;">Profil <strong>{tolerance}</strong> | Horizon <strong>{horizon}</strong> | Allocation recommandee : <strong>{alloc_min}-{alloc_max}% en BTC</strong></p>
+        <p style="font-size:1rem;opacity:0.85;">Montant optimal : <strong>{montant_recommande:,.0f} EUR</strong> ({btc_recommande:.3f} BTC au prix actuel)</p>
     </div>""", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
@@ -513,6 +708,7 @@ else:
 
     st.divider()
 
+    # ── SECTION 12 : ANALYSE IA CLAUDE ──
     st.subheader("12. Analyse IA — Powered by Claude")
     if st.button("Generer l'analyse IA de votre tresorerie"):
         with st.spinner("Claude analyse votre portefeuille..."):
@@ -563,10 +759,9 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                 )
                 analyse = message.content[0].text
                 st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #1e1e3c, #2d2d6b);
-                     padding: 2rem; border-radius: 10px; color: white; margin-bottom: 1rem;">
-                    <h3 style="color: white; margin-bottom: 1rem;">Analyse IA — {nom_entreprise}</h3>
-                    <div style="line-height: 1.8; font-size: 0.95rem;">{analyse.replace(chr(10), '<br>')}</div>
+                <div style="background:linear-gradient(135deg,#1e1e3c,#2d2d6b);padding:2rem;border-radius:10px;color:white;margin-bottom:1rem;">
+                    <h3 style="color:white;margin-bottom:1rem;">Analyse IA — {nom_entreprise}</h3>
+                    <div style="line-height:1.8;font-size:0.95rem;">{analyse.replace(chr(10), '<br>')}</div>
                 </div>""", unsafe_allow_html=True)
                 st.success("Analyse generee avec succes — powered by Claude AI")
             except Exception as e:
