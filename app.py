@@ -210,49 +210,72 @@ col3.metric("Gain annuel estime", f"{bench_actuel['gain_eur']:,.0f} EUR")
 st.divider()
 
 # ── SECTION 6 : BACKTESTING ──
-st.subheader("6. Backtesting — Et si vous aviez investi il y a 3 ans ?")
+# ── SECTION 6 : BACKTESTING ──
+st.subheader("6. Backtesting — Et si vous aviez investi ?")
+
+col1, col2 = st.columns(2)
+with col1:
+    periode_back = st.selectbox("Periode de backtesting", ["6 mois", "1 an", "2 ans", "3 ans"])
+with col2:
+    alloc_back = st.slider("Allocation BTC hypothetique (%)", 1, 20, 3)
+
+jours_map = {"6 mois": 180, "1 an": 365, "2 ans": 730, "3 ans": 1095}
+jours_back = jours_map[periode_back]
 
 if st.button("Lancer le backtesting"):
     with st.spinner("Recuperation des donnees historiques..."):
         try:
-            dates, prices = get_historique_btc()
-            prix_il_y_a_3_ans = prices[0]
-            prix_actuel_hist = prices[-1]
-            performance_btc = ((prix_actuel_hist - prix_il_y_a_3_ans) / prix_il_y_a_3_ans) * 100
+            url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+            params = {"vs_currency": "eur", "days": str(jours_back), "interval": "daily"}
+            headers = {"accept": "application/json"}
+            r = requests.get(url, params=params, headers=headers, timeout=15)
+            data = r.json()
 
-            invest_btc = tresorerie_totale * 0.03
-            invest_cash = tresorerie_totale * 0.97
-            btc_achete = invest_btc / prix_il_y_a_3_ans
-            valeur_btc_auj = btc_achete * prix_actuel_hist
-            valeur_cash_auj = invest_cash * (1 + 0.03 * 3)
-            valeur_totale_auj = valeur_btc_auj + valeur_cash_auj
-            gain_vs_cash_pur = valeur_totale_auj - (tresorerie_totale * (1 + 0.03 * 3))
+            if "prices" not in data:
+                st.error("Donnees indisponibles. L'API CoinGecko a une limite gratuite — reessayez dans 1 minute.")
+            else:
+                prices = [p[1] for p in data["prices"]]
+                prix_depart = prices[0]
+                prix_fin = prices[-1]
+                performance_btc = ((prix_fin - prix_depart) / prix_depart) * 100
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Performance BTC sur 3 ans", f"{performance_btc:+.0f}%")
-            col2.metric("Valeur portefeuille aujourd'hui (3% BTC)", f"{valeur_totale_auj:,.0f} EUR")
-            col3.metric("Gain vs cash pur", f"{gain_vs_cash_pur:+,.0f} EUR")
+                poids_btc = alloc_back / 100
+                poids_cash = 1 - poids_btc
+                invest_btc = tresorerie_totale * poids_btc
+                invest_cash = tresorerie_totale * poids_cash
+                btc_achete = invest_btc / prix_depart
+                valeur_btc_fin = btc_achete * prix_fin
+                annees = jours_back / 365
+                valeur_cash_fin = invest_cash * (1 + 0.03 * annees)
+                valeur_totale_fin = valeur_btc_fin + valeur_cash_fin
+                valeur_cash_pur = tresorerie_totale * (1 + 0.03 * annees)
+                gain_vs_cash = valeur_totale_fin - valeur_cash_pur
 
-            fig2 = go.Figure()
-            fig2.add_trace(go.Scatter(
-                y=prices,
-                mode="lines",
-                line=dict(color="#4f46e5", width=2),
-                name="Prix BTC (EUR)"
-            ))
-            fig2.update_layout(
-                title="Evolution du prix BTC sur 3 ans (EUR)",
-                yaxis_title="Prix (EUR)",
-                xaxis_title="Jours",
-                height=350
-            )
-            st.plotly_chart(fig2, use_container_width=True)
+                col1, col2, col3 = st.columns(3)
+                col1.metric(f"Performance BTC sur {periode_back}", f"{performance_btc:+.0f}%")
+                col2.metric(f"Valeur portefeuille ({alloc_back}% BTC)", f"{valeur_totale_fin:,.0f} EUR")
+                col3.metric("Gain vs cash pur", f"{gain_vs_cash:+,.0f} EUR")
 
+                fig2 = go.Figure()
+                fig2.add_trace(go.Scatter(
+                    y=prices,
+                    mode="lines",
+                    line=dict(color="#4f46e5", width=2),
+                    name="Prix BTC (EUR)"
+                ))
+                fig2.update_layout(
+                    title=f"Evolution du prix BTC sur {periode_back} (EUR)",
+                    yaxis_title="Prix (EUR)",
+                    xaxis_title="Jours",
+                    height=350
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+
+        except requests.exceptions.Timeout:
+            st.error("Timeout — l'API met trop de temps a repondre. Reessayez dans quelques instants.")
         except Exception as e:
-            st.error("Impossible de recuperer les donnees historiques. Reessayez dans quelques instants.")
-
-st.divider()
-
+            st.error(f"Erreur inattendue : {str(e)}")
+            
 # ── SECTION 7 : MONTE CARLO ──
 st.subheader("7. Simulation Monte Carlo — 30 jours")
 
