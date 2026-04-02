@@ -129,4 +129,100 @@ col2.metric("Baisse -50%", f"{valeur_totale*0.50:,.0f} EUR", "-50%")
 col3.metric("Hausse +30%", f"{valeur_totale*1.30:,.0f} EUR", "+30%")
 
 st.divider()
+st.divider()
+st.subheader("Generer le rapport PDF")
+col1, col2, col3 = st.columns(3)
+with col1:
+    nom_rapport = st.text_input("Nom de l'entreprise pour le rapport", "Mon Entreprise SAS")
+with col2:
+    btc_rapport = st.number_input("BTC pour le rapport", min_value=0.0, value=montant_btc, step=0.1)
+with col3:
+    eth_rapport = st.number_input("ETH pour le rapport", min_value=0.0, value=montant_eth, step=1.0)
+
+if st.button("Generer le rapport PDF"):
+    from fpdf import FPDF
+    from io import BytesIO
+    
+    valeur_btc_r = btc_rapport * prix_btc
+    valeur_eth_r = eth_rapport * prix_eth
+    valeur_totale_r = valeur_btc_r + valeur_eth_r
+    var_95_r = valeur_totale_r * vol_journaliere * 1.645
+    var_99_r = valeur_totale_r * vol_journaliere * 2.326
+    poids_r = 10.0
+    
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_margins(20, 20, 20)
+    
+    pdf.set_fill_color(30, 30, 60)
+    pdf.rect(0, 0, 210, 35, 'F')
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.set_y(8)
+    pdf.cell(0, 10, "CryptoTreasury", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 8, "Rapport de risque crypto - Tresorerie d'entreprise", new_x="LMARGIN", new_y="NEXT", align="C")
+    
+    pdf.set_y(42)
+    pdf.set_text_color(30, 30, 60)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(0, 8, f"Entreprise : {nom_rapport}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(100, 100, 100)
+    now = datetime.now().strftime("%d/%m/%Y a %H:%M")
+    pdf.cell(0, 6, f"Date : {now}", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+    
+    def section(titre):
+        pdf.set_fill_color(240, 242, 255)
+        pdf.set_text_color(30, 30, 60)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(0, 8, f"  {titre}", new_x="LMARGIN", new_y="NEXT", fill=True)
+        pdf.ln(2)
+    
+    def ligne(label, valeur):
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(50, 50, 50)
+        pdf.cell(90, 7, label)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_text_color(30, 30, 60)
+        pdf.cell(0, 7, valeur, new_x="LMARGIN", new_y="NEXT")
+    
+    section("1. Exposition actuelle")
+    ligne("Bitcoin :", f"{btc_rapport} BTC x {prix_btc:,.0f} EUR = {valeur_btc_r:,.0f} EUR")
+    ligne("Ethereum :", f"{eth_rapport} ETH x {prix_eth:,.0f} EUR = {valeur_eth_r:,.0f} EUR")
+    ligne("Valeur totale :", f"{valeur_totale_r:,.0f} EUR")
+    pdf.ln(4)
+    
+    section("2. Mesures de risque (IFRS 9)")
+    ligne("VaR 95% sur 1 jour :", f"-{var_95_r:,.0f} EUR")
+    ligne("VaR 99% sur 1 jour :", f"-{var_99_r:,.0f} EUR")
+    pdf.ln(4)
+    
+    section("3. Scenarios de stress (MiCA Art. 76)")
+    ligne("Baisse -30% :", f"{valeur_totale_r*0.70:,.0f} EUR")
+    ligne("Baisse -50% :", f"{valeur_totale_r*0.50:,.0f} EUR")
+    ligne("Hausse +30% :", f"{valeur_totale_r*1.30:,.0f} EUR")
+    pdf.ln(4)
+    
+    section("4. Conformite reglementaire")
+    ligne("IFRS 9 :", "Actifs a la juste valeur (FVTPL)")
+    ligne("MiCA Art. 76 :", "Stress tests effectues")
+    pdf.ln(8)
+    
+    pdf.set_fill_color(30, 30, 60)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.cell(0, 8, "  Genere par CryptoTreasury - Document confidentiel",
+             new_x="LMARGIN", new_y="NEXT", fill=True)
+    
+    pdf_bytes = bytes(pdf.output())
+    
+    st.download_button(
+        label="Telecharger le rapport PDF",
+        data=pdf_bytes,
+        file_name=f"rapport_{nom_rapport.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+        mime="application/pdf"
+    )
+    st.success("Rapport genere avec succes !")
 st.caption("CryptoTreasury — Donnees fournies par CoinGecko — Conforme IFRS 9 et MiCA")
