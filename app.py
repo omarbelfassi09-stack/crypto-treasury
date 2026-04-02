@@ -1061,8 +1061,15 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                             customer_email=st.session_state.user.email,
                             metadata={"user_id": st.session_state.user.id, "plan": "professional"}
                         )
-                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
-                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                        st.markdown(f"""
+                        <div style="text-align:center; margin-top:1rem;">
+                            <a href="{session.url}" target="_blank"
+                               style="background:#3b82f6; color:white; padding:0.8rem 2rem;
+                               border-radius:8px; text-decoration:none; font-weight:600; font-size:1rem;">
+                               Proceder au paiement
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
                     except Exception as e:
                         st.error(f"Erreur : {str(e)}")
 
@@ -1080,8 +1087,15 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                             customer_email=st.session_state.user.email,
                             metadata={"user_id": st.session_state.user.id, "plan": "professional"}
                         )
-                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
-                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                        st.markdown(f"""
+                        <div style="text-align:center; margin-top:1rem;">
+                            <a href="{session.url}" target="_blank"
+                               style="background:#3b82f6; color:white; padding:0.8rem 2rem;
+                               border-radius:8px; text-decoration:none; font-weight:600; font-size:1rem;">
+                               Proceder au paiement
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
                     except Exception as e:
                         st.error(f"Erreur : {str(e)}")
 
@@ -1119,8 +1133,15 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                             customer_email=st.session_state.user.email,
                             metadata={"user_id": st.session_state.user.id, "plan": "corporate"}
                         )
-                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
-                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                        st.markdown(f"""
+                        <div style="text-align:center; margin-top:1rem;">
+                            <a href="{session.url}" target="_blank"
+                               style="background:#1e1e3c; color:white; padding:0.8rem 2rem;
+                               border-radius:8px; text-decoration:none; font-weight:600; font-size:1rem;">
+                               Proceder au paiement
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
                     except Exception as e:
                         st.error(f"Erreur : {str(e)}")
 
@@ -1138,8 +1159,15 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
                             customer_email=st.session_state.user.email,
                             metadata={"user_id": st.session_state.user.id, "plan": "corporate"}
                         )
-                        st.markdown(f'<meta http-equiv="refresh" content="0;url={session.url}">', unsafe_allow_html=True)
-                        st.markdown(f"[Cliquez ici si vous n'etes pas redirige]({session.url})")
+                        st.markdown(f"""
+                        <div style="text-align:center; margin-top:1rem;">
+                            <a href="{session.url}" target="_blank"
+                               style="background:#1e1e3c; color:white; padding:0.8rem 2rem;
+                               border-radius:8px; text-decoration:none; font-weight:600; font-size:1rem;">
+                               Proceder au paiement
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
                     except Exception as e:
                         st.error(f"Erreur : {str(e)}")
 
@@ -1173,7 +1201,7 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
         st.markdown("""
         <div style="background: #f8f9ff; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem; margin-top: 1rem;">
             <p style="color: #666; font-size: 0.9rem;">
-            Pour modifier ou resilier votre abonnement, contactez-nous a 
+            Pour modifier ou resilier votre abonnement, contactez-nous a
             <strong>contact@cryptotreasury.com</strong>
             </p>
         </div>
