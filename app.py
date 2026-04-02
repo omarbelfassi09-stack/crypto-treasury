@@ -138,7 +138,7 @@ if st.session_state.user is None:
 else:
 
     # ── LECTURE DU PLAN UTILISATEUR ──
-    if "plan_utilisateur" not in st.session_state:
+    if True:
         try:
             profil_data = supabase.table("profiles")\
                 .select("plan, entreprise")\
