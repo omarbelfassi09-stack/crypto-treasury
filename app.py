@@ -530,6 +530,21 @@ else:
         )
         st.success("Rapport board-ready genere avec succes !")
 
+    # Sauvegarde dans Supabase
+        try:
+            supabase.table("rapports").insert({
+                "user_id": st.session_state.user.id,
+                "entreprise": nom_entreprise,
+                "tresorerie_totale": tresorerie_totale,
+                "valeur_crypto": float(valeur_totale_crypto),
+                "poids_crypto": float(poids_crypto),
+                "var_99": float(var_99),
+                "score_risque": score,
+                "profil": profil
+            }).execute()
+        except Exception as e:
+            pass
+
    # ── SECTION 9 : ALERTES PERSONNALISEES ──
     st.subheader("9. Alertes et seuils personnalises")
 
@@ -948,5 +963,35 @@ Sois precis, professionnel, et parle comme un CFO s'adressant a son conseil d'ad
         </small>
     </div>
     """, unsafe_allow_html=True)
+
+# ── SECTION 14 : HISTORIQUE DES RAPPORTS ──
+    st.subheader("14. Historique des rapports")
+
+    if st.button("Charger mon historique"):
+        try:
+            historique = supabase.table("rapports")\
+                .select("*")\
+                .eq("user_id", st.session_state.user.id)\
+                .order("created_at", desc=True)\
+                .limit(10)\
+                .execute()
+
+            if len(historique.data) == 0:
+                st.info("Aucun rapport genere pour l'instant. Generez votre premier rapport dans la section 8.")
+            else:
+                st.success(f"{len(historique.data)} rapport(s) trouve(s)")
+                for rapport in historique.data:
+                    date = rapport["created_at"][:10]
+                    heure = rapport["created_at"][11:16]
+                    with st.expander(f"{rapport['entreprise']} — {date} a {heure}"):
+                        col1, col2, col3, col4 = st.columns(4)
+                        col1.metric("Tresorerie", f"{rapport['tresorerie_totale']:,.0f} EUR")
+                        col2.metric("Valeur crypto", f"{rapport['valeur_crypto']:,.0f} EUR")
+                        col3.metric("Poids crypto", f"{rapport['poids_crypto']:.1f}%")
+                        col4.metric("Score risque", f"{rapport['score_risque']}/100")
+                        st.caption(f"Profil : {rapport['profil']} — VaR 99% : -{rapport['var_99']:,.0f} EUR")
+        except Exception as e:
+            st.error(f"Erreur chargement historique : {str(e)}")
+            
     st.divider()
     st.caption("CryptoTreasury — Donnees : CoinGecko — Conforme IFRS 9 et MiCA — Usage professionnel")
